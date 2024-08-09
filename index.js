@@ -807,8 +807,10 @@ app.get('/get_full_report', async (req, res) => {
                             res.status(200).json({ message: "No such organization found like " + organization })
                             return
                         } else {
+                            let totalAmount = 0
+                            result.map(result => totalAmount += result.amount)
                             result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
-                            customerData = {"userdata":customerData[0], "purchases":result}
+                            customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount}
                             // console.log(customerData)
                             res.status(200).json(customerData)
                             return
