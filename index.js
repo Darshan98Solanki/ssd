@@ -771,7 +771,7 @@ app.get('/get_full_report', async (req, res) => {
 
         conn.query(getUserData, [organization, userId], (err, customerData) => {
             if (err) {
-                res.status(411).json({ message: "Some error occurred..." })
+                res.status(411).json({ message: "Some error 1 occurred..." })
                 return
             } else {
                 const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?"
