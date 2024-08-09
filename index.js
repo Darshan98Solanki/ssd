@@ -267,6 +267,13 @@ app.post("/login", (req, res) => {
             return
         }
     })
+    conn.end((err) => {
+        if (err) {
+            console.error('Error closing the connection:', err.stack);
+        } else {
+            console.log('Connection closed');
+        }
+    })
 })
 
 // singup route
@@ -301,7 +308,13 @@ app.post('/signup', async (req, res) => {
             return
         }
     })
-
+    conn.end((err) => {
+        if (err) {
+            console.error('Error closing the connection:', err.stack);
+        } else {
+            console.log('Connection closed');
+        }
+    })
 })
 
 // get customer route
@@ -310,7 +323,7 @@ app.get('/getcustomers', authenticate, async (req, res) => {
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const sql = "SELECT name,mobile_no,organization,email FROM customers WHERE user_id =?"
 
-    conn.query(sql, [userId],(err, result) => {
+    conn.query(sql, [userId], (err, result) => {
         if (err) {
             res.status(403).json({ message: "Data can not be inserted" })
             return
@@ -702,55 +715,55 @@ app.get("/getreport", authenticate, async (req, res) => {
             return
         } else {
             result[0].due_date = formatDate(result[0].due_date)
-            res.status(200).json({ data: result })
-            return
-            // const doc = new PDFDocument();
-            // let filename = 'example.pdf';
-            // // Remove spaces from the filename
-            // filename = encodeURIComponent(filename) + '.pdf';
+            // res.status(200).json({ data: result })
+            // return
+            const doc = new PDFDocument();
+            let filename = 'example.pdf';
+            // Remove spaces from the filename
+            filename = encodeURIComponent(filename) + '.pdf';
 
-            // // Set response headers
-            // res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
-            // res.setHeader('Content-type', 'application/pdf');
+            // Set response headers
+            res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
+            res.setHeader('Content-type', 'application/pdf', 'charset=utf8');
 
-            // // Pipe the PDF into the response
-            // doc.pipe(res);
+            // Pipe the PDF into the response
+            doc.pipe(res);
 
-            // // Add content to the PDF
-            // setHeaderFooter(doc, HeaderUrl, FooterUrl)
+            // Add content to the PDF
+            setHeaderFooter(doc, HeaderUrl, FooterUrl)
 
-            // const name = result[0].name
-            // const mobile_no = result[0].mobile_no
-            // const organization = result[0].organization
-            // const email = result[0].email
-            // const litre = result[0].litre
-            // const fat = result[0].fat
-            // const fat_price = result[0].fat_price
-            // const amount = result[0].amount
-            // const due_date = result[0].due_date
-            // let x = 210, y = 280
+            const name = result[0].name
+            const mobile_no = result[0].mobile_no
+            const organization = result[0].organization
+            const email = result[0].email
+            const litre = result[0].litre
+            const fat = result[0].fat
+            const fat_price = result[0].fat_price
+            const amount = result[0].amount
+            const due_date = result[0].due_date
+            let x = 210, y = 280
 
-            // printData(doc, "Name : " + name, x, y)
-            // y += 25
-            // printData(doc, "Mobile No : " + mobile_no, x, y)
-            // y += 25
-            // printData(doc, "Organization : " + organization, x, y)
-            // y += 25
-            // printData(doc, "Email : " + email, x, y)
-            // y += 25
-            // printData(doc, "Litre : " + litre, x, y)
-            // y += 25
-            // printData(doc, "Fat : " + fat, x, y)
-            // y += 25
-            // printData(doc, "Fat Price : " + fat_price, x, y)
-            // y += 25
-            // printData(doc, "Total Amount : " + amount, x, y)
-            // y += 25
-            // printData(doc, "Due Date : " + formatDate(due_date), x, y)
-            // y += 25
+            printData(doc, "Name : " + name, x, y)
+            y += 25
+            printData(doc, "Mobile No : " + mobile_no, x, y)
+            y += 25
+            printData(doc, "Organization : " + organization, x, y)
+            y += 25
+            printData(doc, "Email : " + email, x, y)
+            y += 25
+            printData(doc, "Litre : " + litre, x, y)
+            y += 25
+            printData(doc, "Fat : " + fat, x, y)
+            y += 25
+            printData(doc, "Fat Price : " + fat_price, x, y)
+            y += 25
+            printData(doc, "Total Amount : " + amount, x, y)
+            y += 25
+            printData(doc, "Due Date : " + formatDate(due_date), x, y)
+            y += 25
 
-            // // Finalize the PDF and end the stream
-            // doc.end();
+            // Finalize the PDF and end the stream
+            doc.end();
         }
     })
 })
@@ -785,53 +798,53 @@ app.get('/get_full_report', async (req, res) => {
                             res.status(200).json({ message: "No such organization found like " + organization })
                             return
                         } else {
-                            result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
-                            customerData = {"userdata":customerData[0], "purchases":result}
-                            // console.log(customerData)
-                            res.status(200).json(customerData)
-                            return
-                            // const printTableData = convertDataToPrintableFormat(result)
-                            // const doc = new PDFDocument();
-                            // let filename = 'example.pdf';
-                            // // Remove spaces from the filename
-                            // filename = encodeURIComponent(filename) + '.pdf';
+                            // result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
+                            // customerData = {"userdata":customerData[0], "purchases":result}
+                            console.log(customerData)
+                            // res.status(200).json(customerData)
+                            // return
+                            const printTableData = convertDataToPrintableFormat(result)
+                            const doc = new PDFDocument();
+                            let filename = 'example.pdf';
+                            // Remove spaces from the filename
+                            filename = encodeURIComponent(filename) + '.pdf';
 
-                            // // Set response headers
-                            // res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
-                            // res.setHeader('Content-type', 'application/pdf');
+                            // Set response headers
+                            res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
+                            res.setHeader('Content-type', 'application/pdf');
 
-                            // setHeaderFooter(doc, HeaderUrl, FooterUrl)
-                            // const name = customerData[0].name
-                            // const mobile_no = customerData[0].mobile_no
-                            // const email = customerData[0].email
+                            setHeaderFooter(doc, HeaderUrl, FooterUrl)
+                            const name = customerData[0].name
+                            const mobile_no = customerData[0].mobile_no
+                            const email = customerData[0].email
 
-                            // let x = 100, y = 180
+                            let x = 100, y = 180
 
-                            // printData(doc, "Name : " + name, x, y)
-                            // y += 25
-                            // printData(doc, "Mobile No : " + mobile_no, x, y)
-                            // x = 300
-                            // y = 180
-                            // printData(doc, "Organization : " + organization, x, y)
-                            // y += 25
-                            // printData(doc, "Email : " + email, x, y)
-                            // y += 30
+                            printData(doc, "Name : " + name, x, y)
+                            y += 25
+                            printData(doc, "Mobile No : " + mobile_no, x, y)
+                            x = 300
+                            y = 180
+                            printData(doc, "Organization : " + organization, x, y)
+                            y += 25
+                            printData(doc, "Email : " + email, x, y)
+                            y += 30
 
-                            // // Pipe the PDF into the response
-                            // doc.pipe(res);
+                            // Pipe the PDF into the response
+                            doc.pipe(res);
 
-                            // for (var i = 0; i < printTableData.length; i++) {
-                            //     printTable(doc, printTableData[i], y)
-                            //     y = 200
+                            for (var i = 0; i < printTableData.length; i++) {
+                                printTable(doc, printTableData[i], y)
+                                y = 200
 
-                            //     if (i < printTableData.length - 1) {
-                            //         doc.addPage()
-                            //         setHeaderFooter(doc, HeaderUrl, FooterUrl)
-                            //     }
-                            // }
+                                if (i < printTableData.length - 1) {
+                                    doc.addPage()
+                                    setHeaderFooter(doc, HeaderUrl, FooterUrl)
+                                }
+                            }
 
-                            // // Finalize the PDF and end the stream
-                            // doc.end();
+                            // Finalize the PDF and end the stream
+                            doc.end();
                         }
                     }
                 })
