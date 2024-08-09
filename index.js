@@ -252,7 +252,7 @@ app.post("/login", (req, res) => {
     conn.query(query, [email], (err, result) => {
 
         if (err) {
-            res.status(403).json({ message: "Data can not be inserted" })
+            res.status(403).json({ message: err })
             return
         }
 
