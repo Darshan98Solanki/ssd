@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 15, 2024 at 02:37 PM
+-- Generation Time: Aug 18, 2024 at 12:58 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -43,9 +43,9 @@ CREATE TABLE `customers` (
 INSERT INTO `customers` (`customer_id`, `user_id`, `name`, `mobile_no`, `organization`, `email`) VALUES
 (10, 6, 'Harsh', '6353466496', 'anomaly', 'harsh@gmail.com'),
 (11, 7, 'Pranav', '6353466496', 'tcs', 'pranav@gmail.com'),
-(12, 7, 'Vishal', '6353466496', 'opera', 'vishal@gmail.com'),
-(13, 6, 'Vansh', '6353466496', 'amazon', 'vansh@gmail.com'),
-(14, 6, 'Darshan', '2345664578', 'abc', 'darshan@gmail.com');
+(12, 8, 'Vishal', '6353466496', 'opera', 'vishal@gmail.com'),
+(14, 9, 'Darshan', '2345664578', 'abc', 'darshan@gmail.com'),
+(15, 6, 'rer', '4343434343', 'sdsd', 'sdsdsd@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -73,10 +73,11 @@ CREATE TABLE `purchase` (
 --
 
 INSERT INTO `purchase` (`purchase_id`, `customer_id`, `milk_type`, `litre`, `fat`, `fat_price`, `amount`, `purchase_date`, `due_date`, `purchase_time`, `when_`, `payment_status`) VALUES
-(22, 14, 'cow', 12, 12, 23, 3200, '2024-08-15', '2024-09-25', '2024-08-15 13:09:46', 'morning', 'pending'),
 (23, 11, 'buffalo', 12, 12, 23, 3200, '2024-08-15', '2024-09-25', '2024-08-15 13:13:06', 'evening', 'pending'),
 (24, 11, 'cow', 20, 12, 13, 5000, '2024-08-15', '2024-08-26', '2024-08-15 14:24:38', 'morning', 'pending'),
-(25, 14, 'buffalo', 15, 23, 12, 90000, '2024-08-15', '2024-09-25', '2024-08-15 18:04:42', 'morning', 'pending');
+(25, 14, 'buffalo', 15, 23, 12, 90000, '2024-08-15', '2024-09-25', '2024-08-15 18:04:42', 'morning', 'pending'),
+(26, 10, 'Cow', 12, 21, 44, 11063, '2024-08-18', '2024-08-20', '2024-08-18 10:39:37', 'Morning', 'pending'),
+(27, 15, 'Buffalo', 12, 21, 44, 11063, '2024-08-18', '2024-08-30', '2024-08-18 10:40:10', 'Morning', 'pending');
 
 -- --------------------------------------------------------
 
@@ -98,7 +99,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`user_id`, `name`, `email`, `password`, `standard_price`, `location`) VALUES
-(6, 'Darshan', 'darshan@gmail.com', '$2b$10$Zc5LS4KTUHjKo05oo8XiRuakJFGnw1Kb4zEbsPAI94PnSh89kQ2Q2', 98.9, 'surat'),
+(6, 'Darshan', 'darshan@gmail.com', '$2b$10$FZCfws4BNzkWpr1lS4LIculFGMOlcVQSbBt0k8N3tgMrKjoL4Kfbi', 43.9, 'surat'),
 (7, 'Harsh', 'harsh@gmail.com', '$2b$10$8sObp.cme5dK8Q4rHYvnaOdiowVQS6J9f9ySqQ1vvH3N2dci2VZKu', 13, 'gandhidham'),
 (8, 'Vansh', 'vansh@gmail.com', '$2b$10$JFph5SzvLHgCXmXkv1Y8X.FoWgyw4peDPgFVEXtWpMyw4POFhiViW', 10, '');
 
@@ -132,13 +133,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `purchase`
 --
 ALTER TABLE `purchase`
-  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `user`
