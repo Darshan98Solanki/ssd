@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 07, 2024 at 08:43 AM
+-- Generation Time: Aug 15, 2024 at 02:37 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -44,7 +44,8 @@ INSERT INTO `customers` (`customer_id`, `user_id`, `name`, `mobile_no`, `organiz
 (10, 6, 'Harsh', '6353466496', 'anomaly', 'harsh@gmail.com'),
 (11, 7, 'Pranav', '6353466496', 'tcs', 'pranav@gmail.com'),
 (12, 7, 'Vishal', '6353466496', 'opera', 'vishal@gmail.com'),
-(13, 6, 'Vansh', '6353466496', 'amazon', 'vansh@gmail.com');
+(13, 6, 'Vansh', '6353466496', 'amazon', 'vansh@gmail.com'),
+(14, 6, 'Darshan', '2345664578', 'abc', 'darshan@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -55,30 +56,27 @@ INSERT INTO `customers` (`customer_id`, `user_id`, `name`, `mobile_no`, `organiz
 CREATE TABLE `purchase` (
   `purchase_id` int(10) NOT NULL,
   `customer_id` int(10) NOT NULL,
+  `milk_type` varchar(10) NOT NULL,
   `litre` int(10) NOT NULL,
   `fat` int(10) NOT NULL,
   `fat_price` int(10) NOT NULL,
-  `discount` int(10) NOT NULL,
   `amount` int(10) NOT NULL,
   `purchase_date` date NOT NULL DEFAULT current_timestamp(),
   `due_date` date NOT NULL,
-  `remainder_type` varchar(10) NOT NULL,
-  `payment_status` varchar(15) NOT NULL,
-  `additional_notes` varchar(500) NOT NULL,
-  `report` varchar(500) NOT NULL
+  `purchase_time` varchar(50) NOT NULL DEFAULT current_timestamp(),
+  `when_` varchar(10) NOT NULL,
+  `payment_status` varchar(15) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `purchase`
 --
 
-INSERT INTO `purchase` (`purchase_id`, `customer_id`, `litre`, `fat`, `fat_price`, `discount`, `amount`, `purchase_date`, `due_date`, `remainder_type`, `payment_status`, `additional_notes`, `report`) VALUES
-(14, 10, 10, 10, 20, 0, 2000, '2024-08-07', '2024-08-24', 'every day', 'pending', 'bhai dudh roj chahiye', ''),
-(15, 11, 5, 10, 10, 0, 500, '2024-08-07', '2024-07-24', 'every day', 'pending', 'bhai dudh roj chahiye', ''),
-(17, 12, 20, 10, 10, 0, 2000, '2024-08-07', '2024-08-02', 'every day', 'pending', 'bhai dudh roj chahiye', ''),
-(18, 13, 15, 10, 10, 0, 1500, '2024-08-07', '2024-08-02', 'every day', 'pending', 'bhai dudh roj chahiye', ''),
-(19, 10, 10, 10, 10, 0, 1000, '2024-08-07', '2024-08-22', 'every day', 'pending', 'bhai dudh roj chahiye', ''),
-(20, 10, 10, 10, 10, 0, 1000, '2024-08-07', '2024-08-24', 'every day', 'pending', 'bhai dudh roj chahiye', '');
+INSERT INTO `purchase` (`purchase_id`, `customer_id`, `milk_type`, `litre`, `fat`, `fat_price`, `amount`, `purchase_date`, `due_date`, `purchase_time`, `when_`, `payment_status`) VALUES
+(22, 14, 'cow', 12, 12, 23, 3200, '2024-08-15', '2024-09-25', '2024-08-15 13:09:46', 'morning', 'pending'),
+(23, 11, 'buffalo', 12, 12, 23, 3200, '2024-08-15', '2024-09-25', '2024-08-15 13:13:06', 'evening', 'pending'),
+(24, 11, 'cow', 20, 12, 13, 5000, '2024-08-15', '2024-08-26', '2024-08-15 14:24:38', 'morning', 'pending'),
+(25, 14, 'buffalo', 15, 23, 12, 90000, '2024-08-15', '2024-09-25', '2024-08-15 18:04:42', 'morning', 'pending');
 
 -- --------------------------------------------------------
 
@@ -100,7 +98,7 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`user_id`, `name`, `email`, `password`, `standard_price`, `location`) VALUES
-(6, 'Darshan Solanki', 'darshan@gmail.com', '$2b$10$Zc5LS4KTUHjKo05oo8XiRuakJFGnw1Kb4zEbsPAI94PnSh89kQ2Q2', 12.9, 'Anjar'),
+(6, 'Darshan', 'darshan@gmail.com', '$2b$10$Zc5LS4KTUHjKo05oo8XiRuakJFGnw1Kb4zEbsPAI94PnSh89kQ2Q2', 98.9, 'surat'),
 (7, 'Harsh', 'harsh@gmail.com', '$2b$10$8sObp.cme5dK8Q4rHYvnaOdiowVQS6J9f9ySqQ1vvH3N2dci2VZKu', 13, 'gandhidham'),
 (8, 'Vansh', 'vansh@gmail.com', '$2b$10$JFph5SzvLHgCXmXkv1Y8X.FoWgyw4peDPgFVEXtWpMyw4POFhiViW', 10, '');
 
@@ -134,13 +132,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `purchase`
 --
 ALTER TABLE `purchase`
-  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `user`

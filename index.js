@@ -1,42 +1,16 @@
 const express = require('express')
-const PDFDocument = require("pdfkit-table");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const conn = require('./connection.js')
-const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization } = require('./types')
+const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder } = require('./types')
 const app = express()
-// const multer = require('multer')
 const bodyParser = require('body-parser')
-const path = require('path')
-const fs = require('fs');
 const port = 3000
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
-const HeaderUrl = './reports/basefiles/Header.jpg'
-const FooterUrl = './reports/basefiles/Footer.jpg'
 // const path_to_store = "user_profiles/"
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.json())
-
-
-//************      Ini storage        ************
-
-// const storage = multer.diskStorage({
-//     destination: function (req, file, cb) {
-//         return cb(null, path_to_store)
-//     },
-//     filename: function (req, file, cb) {
-//         return cb(null, `${Date.now()}-${file.originalname}`)
-//     },
-// })
-
-// const upload = multer({
-//     storage,
-//     limits: { fileSize: 5000000 },
-//     fileFilter: function (req, file, cb) {
-//         checkFileType(file, cb);
-//     }
-// })
 
 //************      helper functions start        ************
 
@@ -73,73 +47,6 @@ function closeConnection(conn) {
     });
 }
 
-// use to convert data into printable format for table
-function convertDataToPrintableFormat(data) {
-    let formatedData = []
-    let count = 0
-    let convert = []
-    data.map(singleData => {
-        let tmp = []
-        tmp.push(formatDate(singleData.purchase_date))
-        tmp.push(singleData.litre)
-        tmp.push(singleData.fat)
-        tmp.push(singleData.amount)
-        count++
-        if (count == 20) {
-            formatedData.push(convert)
-            convert = []
-            count = 0
-        } else {
-            convert.push(tmp)
-        }
-    })
-    if (convert.length != 0)
-        formatedData.push(convert)
-    return formatedData
-}
-
-//use to print table
-function printTable(pdfDoc, data, y) {
-
-    ; (async function createTable() {
-        // table
-        const table = {
-            title: '',
-            headers: ['Purchase Date', 'Litre', 'Fat', 'Amount'],
-            rows: data,
-        };
-
-        const options = {
-            x: 60,
-            y: y,
-            prepareHeader: () => pdfDoc.font('Helvetica-Bold').fontSize(12),
-            prepareRow: (row, i) => pdfDoc.font('Helvetica').fontSize(12)
-        };
-
-        // the magic (async/await)
-        await pdfDoc.table(table, options);
-
-    })();
-
-}
-
-// print text in pdf
-function printData(pdfDoc, text, x, y) {
-    pdfDoc.fontSize(16).font('Times-Roman').text(text, x, y);
-}
-
-//set header and footer in pdf
-function setHeaderFooter(pdfDoc, headerUrl, FooterUrl) {
-    pdfDoc.image(headerUrl, 0, 0,
-        {
-            fit: [pdfDoc.page.width, 300],
-        })
-    pdfDoc.image(FooterUrl, 0, pdfDoc.page.height - 100,
-        {
-            fit: [pdfDoc.page.width, 300],
-        })
-}
-
 // formate date into dd-mm-yyyy
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -150,19 +57,6 @@ function formatDate(dateString) {
     return `${day}-${month}-${year}`;
 }
 
-// checking file type
-
-function checkFileType(file, cb) {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-        return cb(null, true);
-    } else {
-        cb('Error: Images only! (jpeg, jpg, png)');
-    }
-}
 
 // get user id from token
 function getUserIdFromToken(req) {
@@ -204,19 +98,19 @@ function checkPurchaseStatus(result) {
 }
 
 //get customer I'd 
-function getCustomerId(email) {
-
-    const sql = "SELECT customer_id FROM customers WHERE email=?"
+function getCustomerIdFromOrganization(organization) {
+    const sql = "SELECT customer_id FROM customers WHERE organization=?"
     return new Promise((resolve, reject) => {
-        conn.query(sql, [email], (err, result) => {
+        conn.query(sql, [organization], (err, result) => {
             if (err) {
                 reject({ code: err.code, message: err.message })
             } else {
-                resolve(result[0]["customer_id"])
+                resolve({data:result[0]["customer_id"]})
             }
         })
     })
 }
+
 //check user exisits or not
 function checkCustomerExists(email) {
     const sql = "SELECT COUNT(email) FROM customers WHERE email=?"
@@ -226,6 +120,21 @@ function checkCustomerExists(email) {
                 reject({ code: err.code, message: err.message })
             } else {
                 resolve((result[0]["COUNT(email)"] >= 1) ? true : false)
+            }
+        })
+    })
+}
+
+// check organization is registered or not
+function checkOrganizationRegistration(organization){
+
+    const sql = "SELECT COUNT(organization) FROM customers WHERE organization=?"
+    return new Promise((resolve, reject) => {
+        conn.query(sql, [organization], (err, result) => {
+            if (err) {
+                reject({ code: err.code, message: err.message })
+            } else {
+                resolve((result[0]["COUNT(organization)"] >= 1) ? true : false)
             }
         })
     })
@@ -243,9 +152,6 @@ function checkUserExists(email) {
         })
     })
 }
-//************          helper functions end       ************
-
-
 
 //************          routes start        ************
 // login route
@@ -295,7 +201,7 @@ app.post('/signup', async (req, res) => {
     }
 
     const email = parseData.data.email
-    const checkUser = await checkUserExists(email).then(response => { return response }).catch(err => { res.status(500).json({ message: err.message }) })
+    const checkUser = await checkUserExists(email).then(response => { return response }).catch(err => { res.status(500).json({ message: "Some error ocucured" }) })
 
     if (checkUser) {
         res.status(403).json({ message: "User is already registed with this email" })
@@ -312,99 +218,6 @@ app.post('/signup', async (req, res) => {
             return
         } else {
             res.status(200).json({ message: "Registration done successfully" })
-            return
-        }
-    })
-    closeConnection(conn)
-})
-
-// get customer route
-app.get('/getcustomers', authenticate, async (req, res) => {
-
-    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const sql = "SELECT name,mobile_no,organization,email FROM customers WHERE user_id =?"
-
-    conn.query(sql, [userId], (err, result) => {
-        if (err) {
-            res.status(403).json({ message: "Data can not be inserted" })
-            return
-        } else {
-            res.status(200).json({ data: result })
-            return
-        }
-    })
-    closeConnection(conn)
-})
-
-app.post('/makepurchase', authenticate, async (req, res) => {
-
-    const data = req.body
-    const parseData = makeOrder.safeParse(data)
-
-    if (!parseData.success) {
-        res.status(411).json(parseData.error.issues[0].message)
-        return
-    }
-
-    const email = parseData.data.email
-    const checkCustomer = await checkCustomerExists(email).then(response => { return response }).catch(err => { res.status(500).json({ message: err.message }) })
-
-    if (!checkCustomer) {
-        const customer_name = parseData.data.customer_name
-        const mobile_no = parseData.data.phone_number
-        const organization = parseData.data.organization
-        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-
-        const query = "INSERT INTO customers(user_id,name,mobile_no,organization,email) VALUES(?,?,?,?,?)"
-
-        conn.query(query, [userId, customer_name, mobile_no, organization, email], (err, result) => {
-            if (err) {
-                res.status(403).json({ message: "Data cannot be inserted" })
-            }
-        })
-    }
-
-    const customerId = await getCustomerId(parseData.data.email).then(userid => { return userid }).catch(err => { res.status(500).json({ message: err.message }) })
-    const due_date = parseData.data.due_date
-    const litre = parseData.data.litre
-    const fat = parseData.data.fat
-    const fat_price = parseData.data.fat_price
-    const discount = parseData.data.discount
-    const amount = parseData.data.amount
-    const remainder_type = parseData.data.remainder_type
-    const additional_notes = parseData.data.additional_notes
-
-    const query = "INSERT INTO purchase(customer_id, litre, fat, fat_price, discount, amount, due_date,remainder_type, payment_status, additional_notes) VALUES(?,?,?,?,?,?,?,?,?,?)"
-
-    conn.query(query, [customerId, litre, fat, fat_price, discount, amount, due_date, remainder_type, 'pending', additional_notes], (err, result) => {
-
-        if (err) {
-            console.log(err)
-            res.status(403).json({ message: "Order can't placed" })
-            return
-        } else {
-            res.status(200).json({ message: "Order placed successfully" })
-            return
-        }
-    })
-    closeConnection(conn)
-})
-
-// get biilles
-app.get('/getbills', authenticate, async (req, res) => {
-
-    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-
-    const query = "SELECT p.purchase_id,c.customer_id,c.name,p.amount,p.due_date,p.payment_status,p.remainder_type,p.additional_notes FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
-
-    conn.query(query, [userId], (err, result) => {
-
-        if (err) {
-            res.status(403).json({ message: "Some error occurred" })
-            return
-        } else {
-            result.map(result => checkPurchaseStatus(result))
-            res.status(200).json({ data: result })
             return
         }
     })
@@ -432,40 +245,69 @@ app.post("/forgot_password", async (req, res) => {
 
         conn.query(sql, [password, email], (err, result) => {
             if (err) {
-                res.status(403).json({ message: "Data can not be inserted" })
+                res.status(403).json({ message: "Password can not be updated..." })
                 return
             } else {
                 res.status(403).json({ message: "Password updated successfully..." })
+                return
             }
         })
 
     } else {
         res.status(403).json({ message: "User not found" })
+        return
     }
     closeConnection(conn)
 })
 
-// get single customer data from purchase id
-
-app.get('/getcustomerdata', authenticate, (req, res) => {
+//add customer
+app.post("/add_customer", authenticate, async (req, res)=>{
 
     const data = req.body
-    const parseData = checkPurchaseId.safeParse(data)
-
-    if (!parseData.success) {
-        res.status(411).json({ message: parseData.error.issues[0].message })
+    const parseData = addCustomer.safeParse(data)
+    
+    if(!parseData.success){
+        res.status(411).json({"error":parseData.error.issues[0].message})
         return
     }
+    
+    const organization = parseData.data.organization
+    const checkOrganization = await checkOrganizationRegistration(organization).then(response => { return response }).catch(err => { res.status(500).json({ message: "Somer error occured" }) })
+    
+    if(!checkOrganization){
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(500).json({ message: "Some error occured" }) })
+        const name = parseData.data.name
+        const phone_number = parseData.data.phone_number
+        const email = parseData.data.email
 
-    const purchaseId = parseData.data.purchaseId
-    const sql = "SELECT c.customer_id, p.purchase_id,c.name, c.mobile_no,c.organization,c.email,p.litre,p.fat,p.fat_price,p.discount,p.amount,p.due_date,p.remainder_type,p.additional_notes FROM purchase p INNER JOIN customers c ON c.customer_id = p.customer_id AND p.purchase_id = ?"
+        const query = "INSERT INTO customers(user_id,name,mobile_no,organization,email) VALUES(?,?,?,?,?)"
 
-    conn.query(sql, [purchaseId], (err, result) => {
+        conn.query(query, [userId, name, phone_number, organization, email], (err, result) => {
+            if (err) {
+                res.status(403).json({ message: "Data cannot be inserted" })
+                return
+            }else{
+                res.status(200).json({message: "Data successfully inserted"})
+                return 
+            }
+        })
+    }else{
+        res.status(401).json({message: "Organization already in use"})
+        return
+    }
+    closeConnection(conn)
+})
+
+app.get("/get_organizations", authenticate, async (req, res)=>{
+
+    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(500).json({ message: "Some error occured" }) })
+    const query = "SELECT name,organization FROM customers WHERE user_id = ?"
+
+    conn.query(query, [userId], (err, result) => {
         if (err) {
-            res.status(403).json({ message: "Some error occured" })
+            res.status(403).json({ message: "Some error occure load organization" })
             return
-        } else {
-            result[0].due_date = new Date(result[0].due_date).toISOString().split('T')[0]
+        }else{
             res.status(200).json({ data: result })
             return
         }
@@ -473,8 +315,89 @@ app.get('/getcustomerdata', authenticate, (req, res) => {
     closeConnection(conn)
 })
 
+//Get standard price
+app.get("/get_standard_price", authenticate, async (req, res) => {
+
+    const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+    const sql = "SELECT standard_price FROM user WHERE user_id=?"
+
+    conn.query(sql, [userId], (err, result) => {
+        if (err) {
+            res.status(411).json({ message: "Some error occured" })
+            return
+        } else {
+            res.status(200).json({ standardPrice: (result[0]["standard_price"]) })
+            return
+        }
+    })
+    closeConnection(conn)
+})
+
+app.post('/make_purchase', authenticate, async (req, res) => {
+
+    const data = req.body
+    const parseData = makeOrder.safeParse(data)
+
+    if (!parseData.success) {
+        res.status(411).json(parseData.error.issues[0].message)
+        return
+    }
+
+    const organization = parseData.data.organization
+    const customerId = await getCustomerIdFromOrganization(organization).then(response => { return response.data }).catch(err => { res.status(500).json({ message: "Some error occured" }) })
+    const milk_type = parseData.data.which
+    const litre = parseData.data.litre
+    const fat = parseData.data.fat
+    const fat_price = parseData.data.fat_price
+    const amount = parseData.data.amount
+    const due_date = parseData.data.due_date
+    const when = parseData.data.when
+    const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,due_date,when_,payment_status) VALUES(?,?,?,?,?,?,?,?,?)"
+    conn.query(query, [customerId,milk_type,litre, fat, fat_price, amount, due_date, when, 'pending'], (err, result) => {
+        if (err) {
+            res.status(403).json({ message: "Order can't placed" })
+            return
+        } else {
+            res.status(200).json({ message: "Order placed successfully" })
+            return
+        }
+    })
+    closeConnection(conn)
+})
+
+app.get("/fetch_single_bill", authenticate, (req, res)=>{
+
+    const data = req.body
+    const parseData = checkSingleFetchOrder.safeParse(data)
+
+    if(!parseData.success){
+        res.status(411).json(parseData.error.issues[0].message)
+        return
+    }
+
+    const organization = parseData.data.organization
+    const when = parseData.data.when
+    const purchase_date = parseData.data.purchase_date
+    const query = "SELECT p.purchase_id,c.name,c.organization,p.fat_price,p.when_,p.milk_type,DATE_FORMAT(p.due_date, '%Y-%m-%d') as due_date,p.litre,p.fat,p.amount FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.organization=? AND p.purchase_date=? ANd p.when_=?"
+
+    conn.query(query, [organization,purchase_date,when], (err, result)=>{
+        if(err){
+            res.status(403).json({ message: "Some error occured" })
+            return
+        }else{
+            if(result.length == 0){
+                res.status(401).json({ message: "Please select valid organization, time and purchase date" })
+            }else{
+                res.status(200).json({ data: result })
+            }
+            return
+        }
+    })
+    closeConnection(conn)
+})
+
 //update purchase order
-app.put('/updatepurchase', authenticate, async (req, res) => {
+app.put('/update_purchase', authenticate, async (req, res) => {
 
     const data = req.body
     const parseData = purchaseUpdate.safeParse(data)
@@ -484,42 +407,74 @@ app.put('/updatepurchase', authenticate, async (req, res) => {
         return
     }
 
-    const customerId = parseData.data.customerId
     const purchaseId = parseData.data.purchaseId
-    const email = parseData.data.email
-    const customer_name = parseData.data.customer_name
-    const phone_number = parseData.data.phone_number
-    const organization = parseData.data.organization
     const litre = parseData.data.litre
     const fat = parseData.data.fat
     const fat_price = parseData.data.fat_price
-    const discount = parseData.data.discount
     const amount = parseData.data.amount
     const due_date = parseData.data.due_date
-    const remainder_type = parseData.data.remainder_type
-    const additional_notes = parseData.data.additional_notes
+    const milk_type = parseData.data.which
+    const when = parseData.data.when
 
+    const updatePurchase = "UPDATE purchase SET milk_type=?,litre=?, fat=?, fat_price=?, amount=?, due_date=?, when_=? WHERE purchase_id=?"
 
-    const updateCustomer = "UPDATE customers SET name=?,mobile_no=?,organization=?,email=? WHERE customer_id=?"
-
-    conn.query(updateCustomer, [customer_name, phone_number, organization, email, customerId], (err, result) => {
+    conn.query(updatePurchase, [milk_type, litre, fat, fat_price, amount, due_date,when, purchaseId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred" })
             return
-        }
-    })
-
-    const updatePurchase = "UPDATE purchase SET litre=?, fat=?, fat_price=?, discount=?, amount=?, due_date=?,remainder_type=?,additional_notes=? WHERE purchase_id=?"
-
-    conn.query(updatePurchase, [litre, fat, fat_price, discount, amount, due_date, remainder_type, additional_notes, purchaseId], (err, result) => {
-
-        if (err) {
-            res.status(411).json({ message: "Some error occurred" })
+        }else{
+            res.status(200).json({ message: "Record Updated successfully" })
             return
         }
     })
+    closeConnection(conn)
+})
 
-    res.status(200).json({ message: "Record Updated successfully" })
+// get biilles
+app.get('/get_bills', authenticate, async (req, res) => {
+
+    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+    const query = "SELECT p.purchase_id,c.customer_id,c.name,p.amount,p.due_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
+
+    conn.query(query, [userId], (err, result) => {
+
+        if (err) {
+            res.status(403).json({ message: "Some error occurred" })
+            return
+        } else {
+            result.map(result => checkPurchaseStatus(result))
+            res.status(200).json({ data: result })
+            return
+        }
+    })
+    closeConnection(conn)
+})
+
+//get bills based on organizations
+app.get("/get_bills_on_organizations", authenticate, async (req, res)=>{
+
+    const data = req.body
+    const parseData = checkOrganization.safeParse(data)
+
+    if(!parseData.success){
+        res.status(411).json({ message: parseData.error.issues[0].message })
+        return
+    }
+    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+    const organization = parseData.data.organization
+    const query = "SELECT p.purchase_id,c.customer_id,c.name,p.amount,p.due_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ? AND organization=?"
+
+    conn.query(query, [userId, organization], (err, result) => {
+
+        if (err) {
+            res.status(403).json({ message: "Some error occurred" })
+            return
+        } else {
+            result.map(result => checkPurchaseStatus(result))
+            res.status(200).json({ data: result })
+            return
+        }
+    })
     closeConnection(conn)
 })
 
@@ -662,120 +617,6 @@ app.put('/update_profile', authenticate, async (req, res) => {
     closeConnection(conn)
 })
 
-// app.get("/getprofile_image", authenticate, async (req, res) => {
-
-//     const options = {
-//         root: path.join(__dirname)
-//     }
-
-//     const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-//     const sql = "SELECT user_profile FROM user WHERE user_id=?"
-
-//     conn.query(sql, [userId], (err, result) => {
-//         if (err) {
-//             res.status(411).json({ message: "Some error occured" })
-//             return
-//         } else {
-//             const filename = result[0].user_profile
-//             res.sendFile(filename, options, (err) => {
-//                 if (err) {
-//                     res.status(411).json({ message: "Something went wrong" })
-//                     return
-//                 }
-//             })
-//         }
-//     })
-// })
-
-
-app.get("/get_standard_price", authenticate, async (req, res) => {
-
-    const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const sql = "SELECT standard_price FROM user WHERE user_id=?"
-
-    conn.query(sql, [userId], (err, result) => {
-        if (err) {
-            res.status(411).json({ message: "Some error occured" })
-            return
-        } else {
-            res.status(200).json({ standardPrice: (result[0]["standard_price"]) })
-            return
-        }
-    })
-    closeConnection(conn)
-})
-
-app.get("/getreport", authenticate, async (req, res) => {
-
-    const data = req.body
-    const parseData = checkPurchaseId.safeParse(data)
-
-    if (!parseData.success) {
-        res.status(411).json({ message: parseData.error.issues[0].message })
-        return
-    }
-
-    const purchaseId = parseData.data.purchaseId
-    const query = "SELECT c.name, c.mobile_no,c.organization,c.email,p.litre,p.fat,p.fat_price,p.amount,p.due_date FROM purchase p INNER JOIN customers c ON c.customer_id = p.customer_id AND p.purchase_id = ?"
-    conn.query(query, [purchaseId], (error, result) => {
-        if (error) {
-            res.status(411).json({ message: "Some error occurred" })
-            return
-        } else {
-            result[0].due_date = formatDate(result[0].due_date)
-            res.status(200).json({ data: result })
-            return
-            // const doc = new PDFDocument();
-            // let filename = 'example.pdf';
-            // // Remove spaces from the filename
-            // filename = encodeURIComponent(filename) + '.pdf';
-
-            // // Set response headers
-            // res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
-            // res.setHeader('Content-type', 'application/pdf', 'charset=utf8');
-
-            // // Pipe the PDF into the response
-            // doc.pipe(res);
-
-            // // Add content to the PDF
-            // setHeaderFooter(doc, HeaderUrl, FooterUrl)
-
-            // const name = result[0].name
-            // const mobile_no = result[0].mobile_no
-            // const organization = result[0].organization
-            // const email = result[0].email
-            // const litre = result[0].litre
-            // const fat = result[0].fat
-            // const fat_price = result[0].fat_price
-            // const amount = result[0].amount
-            // const due_date = result[0].due_date
-            // let x = 210, y = 280
-
-            // printData(doc, "Name : " + name, x, y)
-            // y += 25
-            // printData(doc, "Mobile No : " + mobile_no, x, y)
-            // y += 25
-            // printData(doc, "Organization : " + organization, x, y)
-            // y += 25
-            // printData(doc, "Email : " + email, x, y)
-            // y += 25
-            // printData(doc, "Litre : " + litre, x, y)
-            // y += 25
-            // printData(doc, "Fat : " + fat, x, y)
-            // y += 25
-            // printData(doc, "Fat Price : " + fat_price, x, y)
-            // y += 25
-            // printData(doc, "Total Amount : " + amount, x, y)
-            // y += 25
-            // printData(doc, "Due Date : " + formatDate(due_date), x, y)
-            // y += 25
-
-            // // Finalize the PDF and end the stream
-            // doc.end();
-        }
-    })
-    closeConnection(conn)
-})
 
 //get full report details
 app.get('/get_full_report', async (req, res) => {
@@ -811,51 +652,8 @@ app.get('/get_full_report', async (req, res) => {
                             result.map(result => totalAmount += result.amount)
                             result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                             customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount}
-                            // console.log(customerData)
                             res.status(200).json(customerData)
                             return
-                            // const printTableData = convertDataToPrintableFormat(result)
-                            // const doc = new PDFDocument();
-                            // let filename = 'example.pdf';
-                            // // Remove spaces from the filename
-                            // filename = encodeURIComponent(filename) + '.pdf';
-
-                            // // Set response headers
-                            // res.setHeader('Content-disposition', 'attachment; filename="' + filename + '"');
-                            // res.setHeader('Content-type', 'application/pdf');
-
-                            // setHeaderFooter(doc, HeaderUrl, FooterUrl)
-                            // const name = customerData[0].name
-                            // const mobile_no = customerData[0].mobile_no
-                            // const email = customerData[0].email
-
-                            // let x = 100, y = 180
-
-                            // printData(doc, "Name : " + name, x, y)
-                            // y += 25
-                            // printData(doc, "Mobile No : " + mobile_no, x, y)
-                            // x = 300
-                            // y = 180
-                            // printData(doc, "Organization : " + organization, x, y)
-                            // y += 25
-                            // printData(doc, "Email : " + email, x, y)
-                            // y += 30
-
-                            // // Pipe the PDF into the response
-                            // doc.pipe(res);
-
-                            // for (var i = 0; i < printTableData.length; i++) {
-                            //     printTable(doc, printTableData[i], y)
-                            //     y = 200
-
-                            //     if (i < printTableData.length - 1) {
-                            //         doc.addPage()
-                            //         setHeaderFooter(doc, HeaderUrl, FooterUrl)
-                            //     }
-                            // }
-
-                            // // Finalize the PDF and end the stream
-                            // doc.end();
                         }
                     }
                 })

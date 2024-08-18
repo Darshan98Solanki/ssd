@@ -17,115 +17,102 @@ extra{
     returns :- {token: "bearer gibberish(Token value) "}
     Note:- required after login so set this token as header
 
-3. route:- "/getcustomers"
+3. route:- "/forgot_password"
     Methos: GET
     required data : token required
     returns :- all customers name, mobile_number, organization, email
     where to use :- in bill section to load customers data automatically 
 
-4. route:- "/makepurchase"
-    Methos: POST
-    required data : token required, {customer_name,phone_number,organization,email,litre,fat,fat_price,discount,amount,due_date,remainder_type,additional_notes}
-    example :- 
-{
-    "customer_name":"Harsh",
-    "phone_number":"6353466496",
-    "organization":"abc",
-    "email":"harsh@gmail.com",
-    "litre":10,
-    "fat":10,
-    "fat_price":10,
-    "discount":0,
-    "amount":10,
-    "due_date":"2024-07-24",
-    "remainder_type":"every day",
-    "additional_notes":"bhai dudh roj chahiye" 
-}
-    where to use :- make purchase order
-
-5. route:- "/getbills"
-    Method: GET
-    required data : token required   
-    where to use :- to load all the bills in bill section
-
-6. route:- "/forgot_password"
+4. route:- "/add_customer"
     Method: POST
-    required data : {email, password} 
+    required data: token required, {name, phone_number, organization, email}
+    where to use :- use to add customer  
 
-7. route:- "/getcustomerdata"
+5. route:- "get_organizations"
+    Methos: GET
+    required data : token required
+    where to use :- to load all the organizations in drawer
+
+6. route:-"/get_standard_price"
+    Method:- GET
+    required data : token required
+    return :- { "standardPrice": int }
+
+7. route:-"/make_purchase"
+    Method:- POST
+    required data : token required, {organization, litre, fat, fat_price, amount, due_date, when, which}
+    NOTE:- when have only two values {morning/evening} and which have { cow/buffalo }
+    Example:- {
+        "organization":"tcs",
+        "litre": 12 (number),
+        "fat": 12.4 (number),
+        "fat_price": 23 (number),
+        "amount": 3200 (number),
+        "due_date":"2024-09-25",
+        "when":"morning",
+        "which":"buffalo",
+    }
+
+8. route:- "/fetch_single_bill"
     Method: GET
-    required data : {purchaseId: int}
-    return : data with that purchase order to place in update order section
-    where to use :- to load data when updating the customer order data
+    required data : token required, {organization, when, purchase_date}   
+    where to use :- to load single bill for update
 
-8.  route:- "/deletepuchaseorder"
+9. route:- "/update_purchase" 
+    Method: PUT
+    required data : token required,{purchaseId,litre, fat, fat_price, amount, due_date, when, which}
+
+
+10. route:- "/get_bills"
+    Method:- GET
+    required data : token required
+    where to use: to load all the bills 
+
+11. route:- "/deletepuchaseorder"
     Method: DELETE
     required data : {purchaseId: int}
     return : delete message 
 
-9.  route:- "/updatepurchase"
-    METHOD: PUT
-    required data : token required, {purchaseId,customerId,customer_name,phone_number,organization,email,litre,fat,fat_price,discount,amount,due_date,remainder_type,additional_notes}
-    example:- 
-{
-    "purchaseId":6,
-    "customerId":5,
-    "customer_name":"Pranav",
-    "phone_number":"6353466496",
-    "organization":"pravan",
-    "email":"dars@gmail.com",
-    "litre":100,
-    "fat":10,
-    "fat_price":10,
-    "discount":5,
-    "amount":1000,
-    "due_date":"2024-08-24",
-    "remainder_type":"every day",
-    "additional_notes":"bhai dudh roj chahiye vo bhi tajha" 
-}
-    where to use :- to update the customer order details
-
-10. route:-"/paymentdone"
+12. route:-"/paymentdone"
     Method: PUT
     required data : token requried, {purchaseId : int}
 
-11. route:-"/getusers_for_calendar"
+13. route:-"/getusers_for_calendar"
     Method: GET
     required data : token requried
     where to use :- to get data to render in calender section
 
-12. route:-"/getcalendar_count_status"
+14. route:-"/getcalendar_count_status"
     Method:- GET
     required data : token requried
     where to use :- to show the payments status on bill section('paid','overdue','pending)
 
-13. route:-"/update_profile"
-    Method:- PUT
-    requried data : token requried, username, location, standardPrice
-    where to use :- to udate user profile
-
-14. route:-"/get_profile_data"
+15. route:-"/get_profile_data"
     Method:- GET
     required data :- token required
     return :- user data 
     where to use :- to fetch profile data
 
-15. route:-"/getprofile_image"
+16. route:-"/update_profile"
+    Method:- PUT
+    requried data : token requried, username, location, standardPrice
+    where to use :- to udate user profile
     Method:- GET
     required data : token required
     return :- image of user
 
-16. route:-"/getreport"
+17. route:-"/getreport"
     Method:- GET
     required data : token required, {purchaseId:int}
     return :- report.pdf
 
-17. route:-"/get_standard_price"
-    Method:- GET
-    required data : token required
-    return :- { "standardPrice": int }
-
 18. route:-"/get_full_report"
     Method:- GET
     required data : token required, {organization:string}
-    retunr :- { userdata:{...}, purchases:{...}}# ssd
+    return:- { userdata:{...}, purchases:{...}}
+
+19. route:-"/get_bills_on_organizations"
+    Method:- GET
+    required data : token required, {organization}
+    where to use :- get bills based on organization
+# ssd ho gaya 
