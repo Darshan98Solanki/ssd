@@ -95,7 +95,7 @@ extra{
 
 16. route:-"/update_profile"
     Method:- PUT
-    requried data : token requried, username, location, standardPrice
+    requried data : token requried, username, location, standardPriceCow, standardPriceBuffalo
     where to use :- to udate user profile
     Method:- GET
     required data : token required
@@ -115,4 +115,19 @@ extra{
     Method:- GET
     required data : token required, {organization}
     where to use :- get bills based on organization
+
+20. route:-"/mark_as_all_paid"
+    Method:- PUT
+    required data : token required, {organization} 
+    where to use :- use to update all bills under one organization
+
+21. route:-"/update_advanced_payment_amount"
+    Method:- PUT
+    required data : token required, {organization, amount}
+    where to use :- use to update the advanced payment amount to perticuler organization
+
+22. route:-"/fetch_todays_bills"
+    Method:- GET
+    required data : token required
+    where to use:- use to fetch todays bills 
 # ssd ho gaya 

@@ -23,7 +23,8 @@ const addCustomer = zod.object({
 const updateProfile = zod.object({
     username: zod.string({message:"Username is required"}).min(1,{message:"User name is too short"}),
     location: zod.string({message:"Location is required"}),
-    standardPrice : zod.number({message:"Standard price is required"}).min(1,{message:"Standard price must be greater than 0"}),
+    standardPriceCow : zod.number({message:"Standard cow milk fat price is required"}).min(1,{message:"Standard price must be greater than 0"}),
+    standardPriceBuffalo : zod.number({message:"Standard buffalo milk fat price is required"}).min(1,{message:"Standard price must be greater than 0"}),
 })
 
 const makeOrder = zod.object({
@@ -62,6 +63,11 @@ const purchaseUpdate = zod.object({
     which: zod.string({message:"Which option is required"}).min(1,{message:"Enter valid option cow or bufallow"})
 })
 
+const checkAdvancedPayment = zod.object({
+    organization: zod.string({message:"Organization is required"}).min(1,{message:"Organization name is too short"}),
+    amount: zod.number({message:"Amount is required"}).min(1,{message:"Amount should be greater than zero"}),
+})
+
 module.exports = {
     signUp,
     login,
@@ -71,5 +77,6 @@ module.exports = {
     updateProfile,
     checkOrganization,
     addCustomer,
-    checkSingleFetchOrder
+    checkSingleFetchOrder,
+    checkAdvancedPayment
 }

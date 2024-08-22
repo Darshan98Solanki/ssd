@@ -2,9 +2,11 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const conn = require('./connection.js')
-const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder } = require('./types')
+const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const bodyParser = require('body-parser')
+const { parse } = require('date-fns')
+const { custom } = require('zod')
 const port = 3000
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
 // const path_to_store = "user_profiles/"
@@ -211,8 +213,8 @@ app.post('/signup', async (req, res) => {
     const username = parseData.data.username
     const password = bcrypt.hashSync(parseData.data.password, 10)
 
-    const sql = "INSERT INTO user(name,email,password,standard_price) VALUES (?,?,?,?)"
-    conn.query(sql, [username, email, password, 10], (err, result) => {
+    const sql = "INSERT INTO user(name,email,password,standard_price_cow,standard_price_buffalo) VALUES (?,?,?,?,?)"
+    conn.query(sql, [username, email, password, 10, 10], (err, result) => {
         if (err) {
             res.status(403).json({ message: "Data can not be inserted" })
             return
@@ -319,20 +321,21 @@ app.get("/get_organizations", authenticate, async (req, res)=>{
 app.get("/get_standard_price", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const sql = "SELECT standard_price FROM user WHERE user_id=?"
+    const sql = "SELECT standard_price_cow,standard_price_buffalo FROM user WHERE user_id=?"
 
     conn.query(sql, [userId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occured" })
             return
         } else {
-            res.status(200).json({ standardPrice: (result[0]["standard_price"]) })
+            res.status(200).json({ standardPriceCow: (result[0]["standard_price_cow"]), standardPriceBuffalo:(result[0]["standard_price_buffalo"]) })
             return
         }
     })
     closeConnection(conn)
 })
 
+//make purchase order
 app.post('/make_purchase', authenticate, async (req, res) => {
 
     const data = req.body
@@ -365,6 +368,7 @@ app.post('/make_purchase', authenticate, async (req, res) => {
     closeConnection(conn)
 })
 
+// fetch single bill
 app.get("/fetch_single_bill", authenticate, (req, res)=>{
 
     const data = req.body
@@ -600,11 +604,12 @@ app.put('/update_profile', authenticate, async (req, res) => {
     } else {
         const username = parseData.data.username
         const location = parseData.data.location
-        const standardPrice = parseData.data.standardPrice
+        const standardPriceCow = parseData.data.standardPriceCow
+        const standardPriceBuffalo = parseData.data.standardPriceBuffalo
         const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-        const sql = "UPDATE user SET name=?, standard_price=?, location=? WHERE user_id=?"
+        const sql = "UPDATE user SET name=?, standard_price_cow=?, standard_price_buffalo=?, location=? WHERE user_id=?"
 
-        conn.query(sql, [username, standardPrice, location, userId], (err, result) => {
+        conn.query(sql, [username, standardPriceCow, standardPriceBuffalo, location, userId], (err, result) => {
             if (err) {
                 res.status(411).json({ message: "Some error occured" })
                 return
@@ -616,7 +621,6 @@ app.put('/update_profile', authenticate, async (req, res) => {
     }
     closeConnection(conn)
 })
-
 
 //get full report details
 app.get('/get_full_report', async (req, res) => {
@@ -630,30 +634,35 @@ app.get('/get_full_report', async (req, res) => {
 
         const organization = parseData.data.organization
         const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-        const getUserData = "SELECt name, mobile_no, email FROM customers WHERE organization = ? AND user_id = ?"
+        const getUserData = "SELECt name, mobile_no, email, advanced_payment FROM customers WHERE organization = ? AND user_id = ?"
 
         conn.query(getUserData, [organization, userId], (err, customerData) => {
             if (err) {
                 res.status(411).json({ message: "Some error occurred..." })
                 return
             } else {
-                const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_,DATE_FORMAT(p.purchase_time , '%r') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;;"
-
+                const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_,DATE_FORMAT(p.purchase_time , '%r') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;"
                 conn.query(query, [organization, userId], (err, result) => {
                     if (err) {
                         res.status(411).json({ message: "Some error occurred..." })
                         return
                     } else {
                         if (result.length == 0) {
-                            res.status(200).json({ message: "No such organization found like " + organization })
+                            res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
                             return
                         } else {
                             let totalAmount = 0
                             result.map(result => totalAmount += result.amount)
-                            result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
-                            customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount}
-                            res.status(200).json(customerData)
-                            return
+                            if(totalAmount < customerData[0].advanced_payment){
+                                res.status(200).json({message:`Please set advanced payment to below ${totalAmount}`})
+                                return
+                            }else{
+                                result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
+                                const grandTotalAmount = totalAmount - customerData[0].advanced_payment
+                                customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount, "grand total": grandTotalAmount}
+                                res.status(200).json(customerData)
+                                return
+                            }
                         }
                     }
                 })
@@ -663,5 +672,80 @@ app.get('/get_full_report', async (req, res) => {
     closeConnection(conn)
 })
 
+// mark as paid all bills
+app.put("/mark_as_all_paid", authenticate ,async (req, res)=>{
+  
+    const data = req.body
+    const parseData = checkOrganization.safeParse(data)
+
+    if (!parseData.success) {
+        res.status(200).json({ message: parseData.error.issues[0].message })
+        return
+    }else{
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) }) 
+        const organization = parseData.data.organization
+        const query = "UPDATE purchase SET payment_status='paid' WHERE purchase_id IN(SELECT p.purchase_id FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ? AND organization=?);"
+
+        conn.query(query, [userId, organization], (err, result) => {
+            if (err) {
+                res.status(411).json({ message: "Some error occurred..." })
+                return
+            }else{
+                res.status(200).json({ message: `All record are updated for ${organization}...` })
+                return
+            }
+        })
+        closeConnection(conn)
+    }
+
+})
+
+// update advance payment amount
+app.put("/update_advanced_payment_amount", authenticate, async (req, res)=>{
+
+    const data = req.body
+    const parseData = checkAdvancedPayment.safeParse(data)
+
+    if (!parseData.success) {
+        res.status(200).json({ message: parseData.error.issues[0].message })
+        return
+    }else{
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) }) 
+        const organization = parseData.data.organization
+        const amount = parseData.data.amount
+        const query = "UPDATE customers SET advanced_payment=? WHERE organization=? ANd user_id=?"
+
+        conn.query(query, [amount, organization, userId], (err,  result)=>{
+            if (err) {
+                res.status(411).json({ message: "Some error occurred..." })
+                return
+            }else{
+                res.status(200).json({ message: `Advanced payment ${amount} updated for ${organization}...` })
+                return
+            }
+        })
+    }
+    closeConnection(conn)
+})
+
+//fetch todays purchases/bills
+app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
+
+    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+    const today = new Date().toISOString().split('T')[0]
+    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
+
+    conn.query(query, [userId, today], (err, result)=>{
+        if (err) {
+            console.log(err)
+            res.status(411).json({ message: "Some error occurred..." })
+            return
+        }else{
+            res.status(200).json({ data: result })
+            return
+        }
+    })
+
+})
 
 app.listen(port)

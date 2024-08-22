@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 18, 2024 at 12:58 PM
+-- Generation Time: Aug 21, 2024 at 04:05 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.2.0
 
@@ -33,19 +33,21 @@ CREATE TABLE `customers` (
   `name` varchar(50) NOT NULL,
   `mobile_no` varchar(10) NOT NULL,
   `organization` varchar(80) NOT NULL,
-  `email` varchar(50) NOT NULL
+  `email` varchar(50) NOT NULL,
+  `advanced_payment` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `customers`
 --
 
-INSERT INTO `customers` (`customer_id`, `user_id`, `name`, `mobile_no`, `organization`, `email`) VALUES
-(10, 6, 'Harsh', '6353466496', 'anomaly', 'harsh@gmail.com'),
-(11, 7, 'Pranav', '6353466496', 'tcs', 'pranav@gmail.com'),
-(12, 8, 'Vishal', '6353466496', 'opera', 'vishal@gmail.com'),
-(14, 9, 'Darshan', '2345664578', 'abc', 'darshan@gmail.com'),
-(15, 6, 'rer', '4343434343', 'sdsd', 'sdsdsd@gmail.com');
+INSERT INTO `customers` (`customer_id`, `user_id`, `name`, `mobile_no`, `organization`, `email`, `advanced_payment`) VALUES
+(10, 6, 'Harsh', '6353466496', 'anomaly', 'harsh@gmail.com', 0),
+(11, 7, 'Pranav', '6353466496', 'tcs', 'pranav@gmail.com', 0),
+(12, 8, 'Vishal', '6353466496', 'opera', 'vishal@gmail.com', 0),
+(14, 9, 'Darshan', '2345664578', 'abc', 'darshan@gmail.com', 0),
+(15, 6, 'rer', '4343434343', 'sdsd', 'sdsdsd@gmail.com', 0),
+(16, 7, 'ansh', '1234567890', 'acs', 'ansh@gmail.com', 50000);
 
 -- --------------------------------------------------------
 
@@ -76,8 +78,12 @@ INSERT INTO `purchase` (`purchase_id`, `customer_id`, `milk_type`, `litre`, `fat
 (23, 11, 'buffalo', 12, 12, 23, 3200, '2024-08-15', '2024-09-25', '2024-08-15 13:13:06', 'evening', 'pending'),
 (24, 11, 'cow', 20, 12, 13, 5000, '2024-08-15', '2024-08-26', '2024-08-15 14:24:38', 'morning', 'pending'),
 (25, 14, 'buffalo', 15, 23, 12, 90000, '2024-08-15', '2024-09-25', '2024-08-15 18:04:42', 'morning', 'pending'),
-(26, 10, 'Cow', 12, 21, 44, 11063, '2024-08-18', '2024-08-20', '2024-08-18 10:39:37', 'Morning', 'pending'),
-(27, 15, 'Buffalo', 12, 21, 44, 11063, '2024-08-18', '2024-08-30', '2024-08-18 10:40:10', 'Morning', 'pending');
+(26, 10, 'Cow', 12, 21, 44, 11063, '2024-08-18', '2024-08-20', '2024-08-18 10:39:37', 'Morning', 'paid'),
+(27, 15, 'Buffalo', 12, 21, 44, 11063, '2024-08-18', '2024-08-30', '2024-08-18 10:40:10', 'Morning', 'pending'),
+(28, 11, 'buffalo', 12, 12, 23, 3200, '2024-08-21', '2024-09-25', '2024-08-21 18:39:04', 'morning', 'pending'),
+(29, 11, 'buffalo', 12, 12, 23, 3200, '2024-08-21', '2024-09-25', '2024-08-21 18:39:35', 'morning', 'pending'),
+(30, 11, 'cow', 140, 12, 23, 42000, '2024-08-21', '2024-09-25', '2024-08-21 19:28:02', 'evening', 'pending'),
+(31, 16, 'cow', 140, 12, 23, 42000, '2024-08-21', '2024-09-25', '2024-08-21 19:29:36', 'evening', 'pending');
 
 -- --------------------------------------------------------
 
@@ -133,13 +139,13 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `customer_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `purchase`
 --
 ALTER TABLE `purchase`
-  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `purchase_id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `user`
