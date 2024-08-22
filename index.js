@@ -741,8 +741,13 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
             res.status(411).json({ message: "Some error occurred..." })
             return
         }else{
-            res.status(200).json({ data: result })
-            return
+            if(result.length == 0){
+                res.status(200).json({ message:`No purchase make on ${today}`})
+                return
+            }else{
+                res.status(200).json({ data: result })
+                return
+            }
         }
     })
     closeConnection(conn)
