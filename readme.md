@@ -4,18 +4,18 @@ extra{
 
     token for darshan :- eyJhbGciOiJIUzI1NiJ9.ZGFyc2hhbkBnbWFpbC5jb20.RSOo3J4HomMZLbkp5ZAsL9hpJgUawIRW1U3-aoyR044
 }
-1. route:- "/signup"
-    Method : POST
-    required data : {username, email, password}
-    example:- { "username":"Darshan", "email":"darshan@gmail.com", "password":"asdasdadasd"}
-    Note:- all fields are required else get error message
-
-2. route:- "/login"
+1. route:- "/login"
     Method : POST
     required data : {email, password}
     example:- { "email":"darshan@gmail.com", "password":"asdasdadasd"}
     returns :- {token: "bearer gibberish(Token value) "}
     Note:- required after login so set this token as header
+
+2. route:- "/signup"
+    Method : POST
+    required data : {username, email, password}
+    example:- { "username":"Darshan", "email":"darshan@gmail.com", "password":"asdasdadasd"}
+    Note:- all fields are required else get error message
 
 3. route:- "/forgot_password"
     Methos: GET
@@ -36,7 +36,7 @@ extra{
 6. route:-"/get_standard_price"
     Method:- GET
     required data : token required
-    return :- { "standardPrice": int }
+    return :- { "standardPriceCow": int, standardPriceBuffalo: int}
 
 7. route:-"/make_purchase"
     Method:- POST
