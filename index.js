@@ -745,7 +745,7 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
             return
         }
     })
-
+    closeConnection(conn)
 })
 
 app.listen(port)
