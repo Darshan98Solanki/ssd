@@ -286,7 +286,7 @@ app.post("/add_customer", authenticate, async (req, res)=>{
                 res.status(403).json({ message: "Data cannot be inserted" })
                 return
             }else{
-                res.status(200).json({message: "Data successfully inserted"})
+                res.status(200).json({message: "customer added successfully"})
                 return 
             }
         })
@@ -730,7 +730,7 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
-    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
+    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(p.purchase_time , '%r') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
 
     conn.query(query, [userId, today], (err, result)=>{
         if (err) {
