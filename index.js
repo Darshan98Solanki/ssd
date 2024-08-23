@@ -623,7 +623,7 @@ app.put('/update_profile', authenticate, async (req, res) => {
 app.get('/get_full_report', async (req, res) => {
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
-
+    
     if (!parseData.success) {
         res.status(200).json({ message: parseData.error.issues[0].message })
         return
@@ -638,7 +638,7 @@ app.get('/get_full_report', async (req, res) => {
                 res.status(411).json({ message: "Some error occurred..." })
                 return
             } else {
-                const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_,DATE_FORMAT(p.purchase_time , '%r') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;"
+                const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;"
                 conn.query(query, [organization, userId], (err, result) => {
                     if (err) {
                         res.status(411).json({ message: "Some error occurred..." })
