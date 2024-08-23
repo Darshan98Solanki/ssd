@@ -576,7 +576,7 @@ app.get("/getcalendar_count_status", authenticate, async (req, res) => {
 app.get("/get_profile_data", async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(id => { return id.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const sql = "SELECT name, email, standard_price, location FROM user WHERE user_id = ?"
+    const sql = "SELECT name, email, standard_price_cow, standard_price_buffalo, location FROM user WHERE user_id = ?"
 
     conn.query(sql, [userId], (err, result) => {
         if (err) {

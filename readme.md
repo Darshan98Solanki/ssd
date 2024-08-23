@@ -1,9 +1,8 @@
 All routes deatail
-extra{
-    token for harsh :- eyJhbGciOiJIUzI1NiJ9.aGFyc2hAZ21haWwuY29t.nB9qGNA0JVHxhTPVhoUEOdZ7VX6S7edp-zEt0eCYTt4
+token for harsh :- eyJhbGciOiJIUzI1NiJ9.aGFyc2hAZ21haWwuY29t.nB9qGNA0JVHxhTPVhoUEOdZ7VX6S7edp-zEt0eCYTt4
 
-    token for darshan :- eyJhbGciOiJIUzI1NiJ9.ZGFyc2hhbkBnbWFpbC5jb20.RSOo3J4HomMZLbkp5ZAsL9hpJgUawIRW1U3-aoyR044
-}
+token for darshan :- eyJhbGciOiJIUzI1NiJ9.ZGFyc2hhbkBnbWFpbC5jb20.RSOo3J4HomMZLbkp5ZAsL9hpJgUawIRW1U3-aoyR044
+
 1. route:- "/login"
     Method : POST
     required data : {email, password}
@@ -15,10 +14,11 @@ extra{
     Method : POST
     required data : {username, email, password}
     example:- { "username":"Darshan", "email":"darshan@gmail.com", "password":"asdasdadasd"}
+    return:- {message} of error or successfull
     Note:- all fields are required else get error message
 
 3. route:- "/forgot_password"
-    Methos: GET
+    Methos: POST
     required data : token required
     returns :- all customers name, mobile_number, organization, email
     where to use :- in bill section to load customers data automatically 
@@ -28,7 +28,7 @@ extra{
     required data: token required, {name, phone_number, organization, email}
     where to use :- use to add customer  
 
-5. route:- "get_organizations"
+5. route:- "/get_organizations"
     Methos: GET
     required data : token required
     where to use :- to load all the organizations in drawer
