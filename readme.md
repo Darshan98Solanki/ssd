@@ -1,3 +1,11 @@
+## Technologies used
+- Node.js
+- Express.js
+    - Routes Management
+    - Zod validation
+    - JWT authenitcation
+- MySQL
+
 ## All routes deatail
 
 
@@ -8,7 +16,7 @@
     
     **Example:**
     ```json
-    { "email":"darshan@gmail.com", "password":"asdasdadasd"}
+    { "email":"text", "password":"text"}
     ```
     ```
     Returns:- {token: "bearer gibberish(Token value) "}
@@ -25,7 +33,7 @@
     
     **Example:**
     ```json
-    { "username":"Darshan", "email":"darshan@gmail.com", "password":"asdasdadasd"}
+    { "username":"text", "email":"text", "password":"text"}
     ```
         Returns:- {message} of error or successfull
     **Note:-** all fields are required else get error message
@@ -40,7 +48,7 @@
 
     **Example:**
     ```json
-    { "username":"Darshan", "email":"darshan@gmail.com", "password":"asdasdadasd"}
+    { "username":"text", "email":"text", "password":"text"}
     ```
     
     ```
@@ -59,7 +67,7 @@
     **Required Data:** `token required, {name, phone_number, organization, email}`
     
     ```json
-    { "name":"Darshan", "phone_number":"1234567890", "organization":"abc", "email":"darshan@gmail.com"}
+    { "name":"text", "phone_number":"text", "organization":"text", "email":"text"}
     ```
     
     ```
@@ -101,7 +109,7 @@
     **Required Data:** `token required`
     
     ```
-    Returns:- { "standardPriceCow": data, standardPriceBuffalo: data}
+    Returns:- { "standardPriceCow": int, standardPriceBuffalo: int}
     ```
     **Note:-** to get the standard price
     <br/>
@@ -116,14 +124,14 @@
     **Example:**
     ```json
         {
-            "organization":"abc",
-            "litre": 12 (number),
-            "fat": 12.4 (number),
-            "fat_price": 23 (number),
-            "amount": 3200 (number),
-            "due_date":"2024-09-25",
-            "when":"morning",
-            "which":"buffalo",
+            "organization":"text",
+            "litre": int,
+            "fat": int,
+            "fat_price": int,
+            "amount": int,
+            "due_date":"yyyy-mm-dd",
+            "when":"text",
+            "which":"text",
         }
     ```
         Returns:- {message} for order place or error
@@ -146,8 +154,8 @@
                             "name": "text",
                             "organization": "text",
                             "fat_price": float,
-                            "when_": "morning/evening",
-                            "milk_type": "cow/buffalo",
+                            "when_": "text",
+                            "milk_type": "text",
                             "due_date": "yyyy-mm-dd",
                             "litre": int,
                             "fat": int,
@@ -171,13 +179,13 @@
     ```json
         {
             "purchaseId":int,
-            "litre": 12 (number),
-            "fat": 12.4 (number),
-            "fat_price": 23 (number),
-            "amount": 3200 (number),
-            "due_date":"2024-09-25",
-            "when":"morning",
-            "which":"buffalo",
+            "litre": int,
+            "fat": int,
+            "fat_price": int,
+            "amount": int,
+            "due_date":"yyyy-mm-dd",
+            "when":"text",
+            "which":"text",
         }
     ```
         Returns:- {message} for order update or error
@@ -198,9 +206,9 @@
                         "purchase_id": int,
                         "customer_id": int,
                         "name": "text",
-                        "amount": 3200,
-                        "due_date": "2024-09-25T00:00:00.000Z",
-                        "payment_status": "pending"
+                        "amount": int,
+                        "due_date": "yyyy-mm-ddT00:00:00.000Z",
+                        "payment_status": "text"
                     },
                     .
                     .
@@ -244,9 +252,9 @@
         Returns:-{
                     "message": [
                         {
-                            "name": "Pranav",
-                            "due_date": "2024-09-25T00:00:00.000Z",
-                            "payment_status": "pending"
+                            "name": "text",
+                            "due_date": "yyyy-mm-ddT00:00:00.000Z",
+                            "payment_status": "text"
                         },
                         .
                         .
@@ -266,9 +274,9 @@
                 
         Returns:-{
                     "data": {
-                        "paid": 0,
-                        "overdue": 0,
-                        "pending": 6
+                        "paid": int,
+                        "overdue": int,
+                        "pending": int
                     }
                 }        
 
@@ -285,11 +293,11 @@
         Returns:-{
                     "data": [
                         {
-                            "name": "Harsh",
-                            "email": "harsh@gmail.com",
-                            "standard_price_cow": 15,
-                            "standard_price_buffalo": 18,
-                            "location": "anjar"
+                            "name": "text",
+                            "email": "text",
+                            "standard_price_cow": int,
+                            "standard_price_buffalo": int,
+                            "location": "text"
                         }
                     ]
                 }
@@ -335,12 +343,12 @@
                     "purchases": [
                         {
                             "fat": int,
-                            "purchase_date": "15-08-2024",
+                            "purchase_date": "dd-mm-yyyy",
                             "amount": int,
                             "litre": int,
                             "milk_type": "text",
                             "when_": "text",
-                            "purchase_time": "01:13:06 PM"
+                            "purchase_time": "hh:mm:ss AM/PM"
                         },
                         .
                         .
@@ -365,7 +373,7 @@
                             "customer_id": int,
                             "name": "text",
                             "amount": int,
-                            "due_date": "2024-09-25T00:00:00.000Z",
+                            "due_date": "yyyy-mm-ddT00:00:00.000Z",
                             "payment_status": "text"
                         },
                         .
@@ -428,13 +436,13 @@
         Returns:-{
                     "data": [
                         {
-                            "organization": "anomaly",
-                            "when_": "Morning",
-                            "milk_type": "Cow",
-                            "litre": 34,
-                            "fat": 12,
-                            "amount": 36720,
-                            "purchase_time": "05:22:27 AM"
+                            "organization": "text",
+                            "when_": "text",
+                            "milk_type": "text",
+                            "litre": int,
+                            "fat": int,
+                            "amount": int,
+                            "purchase_time": "hh:mm:ss AM/PM"
                         },
                         .
                         .
