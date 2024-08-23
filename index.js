@@ -5,11 +5,8 @@ const conn = require('./connection.js')
 const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const bodyParser = require('body-parser')
-const { parse } = require('date-fns')
-const { custom } = require('zod')
 const port = 3000
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
-// const path_to_store = "user_profiles/"
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.json())
