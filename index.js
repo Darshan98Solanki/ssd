@@ -352,7 +352,7 @@ app.post('/make_purchase', authenticate, async (req, res) => {
     const amount = parseData.data.amount
     const due_date = parseData.data.due_date
     const when = parseData.data.when
-    const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,due_date,when_,payment_status) VALUES(?,?,?,?,?,?,?,?,?)"
+    const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,due_date,when_,payment_status,purchase_time) VALUES(?,?,?,?,?,?,?,?,?,CONVERT_TZ(NOW(), @@session.time_zone, '+05:30'))"
     conn.query(query, [customerId,milk_type,litre, fat, fat_price, amount, due_date, when, 'pending'], (err, result) => {
         if (err) {
             res.status(403).json({ message: "Order can't placed" })
@@ -730,11 +730,10 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
-    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(p.purchase_time , '%r') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
+    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
 
     conn.query(query, [userId, today], (err, result)=>{
         if (err) {
-            console.log(err)
             res.status(411).json({ message: "Some error occurred..." })
             return
         }else{
