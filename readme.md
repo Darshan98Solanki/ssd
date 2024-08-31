@@ -129,6 +129,7 @@
             "fat": int,
             "fat_price": int,
             "amount": int,
+            "advace_amount": int,
             "due_date":"yyyy-mm-dd",
             "when":"text",
             "which":"text",
@@ -183,6 +184,7 @@
             "fat": int,
             "fat_price": int,
             "amount": int,
+            "advance_amount":int,
             "due_date":"yyyy-mm-dd",
             "when":"text",
             "which":"text",
@@ -338,13 +340,14 @@
                         "name": "text",
                         "mobile_no": "text",
                         "email": "text",
-                        "advanced_payment": int
+                        "organization": "text",
                     },
                     "purchases": [
                         {
                             "fat": int,
                             "purchase_date": "dd-mm-yyyy",
                             "amount": int,
+                            "advance_amount":int,
                             "litre": int,
                             "milk_type": "text",
                             "when_": "text",
@@ -352,10 +355,11 @@
                         },
                         .
                         .
-                    },
+                    ],
                     "total amount": int,
+                    "total advance": int,
                     "grand total": int
-                }
+                }   
                 
     **Note:-** use to generate report in pdf formate
     <br/>
@@ -405,30 +409,7 @@
     <br/>
 
 
-
-
-20. route:-"/update_advanced_payment_amount"
-    **Method:- PUT**
-    
-    **Required Data:** `token required, {organization, amount}`
-    
-    **Example:**
-    ```json
-    { 
-        "organization":"text", 
-        "amount":int
-    }
-    ```
-    ```
-    Returns:- {message} for update profile or error
-    ```
-
-    **Note:-** use to update the advanced payment amount to perticuler organization
-    <br/>
-
-
-
-21. route:-"/fetch_todays_bills"
+20. route:-"/fetch_todays_bills"
     **Method:- GET**
     
     **Required Data:** `token required`
@@ -453,4 +434,81 @@
                 {message} if no purchase done for today
 
     **Note:-** use to fetch todays bills 
+    <br/>
+
+21. route:-"/get_all_bills"
+    **Method:- GET**
+
+    **Required Data:** `token required`
+
+    
+    ```
+        Returns:-{
+                    
+                    "purchases": [
+                        {
+                            "organization": "text"
+                            "fat": int,
+                            "purchase_date": "dd-mm-yyyy",
+                            "amount": int,
+                            "litre": int,
+                            "milk_type": "text",
+                            "when_": "text",
+                            "purchase_time": "hh:mm:ss"
+                        },
+                        .
+                        .
+                        .
+                    ]
+                
+                }
+            or
+            {message} if no purchase done for today
+    ```
+    **Note:-** get all bills to generate the report in profile section {paid, unpaid and pending payments} 
+    <br/>
+
+22. route:-"/get_all_bills_on_organizations"
+    **Method:- GET**
+
+    **Required Data:** `token required, {organization}`
+    
+    **Example**
+    ```json
+        {
+            organization:"text"
+        }
+    ```
+    ```
+        Returns:-{
+                    "userdata": {
+                        "name": "text",
+                        "mobile_no": "text",
+                        "email": "text",
+                        "organization": "text"
+                    },
+                    "purchases": [
+                        {
+                            "fat": int,
+                            "purchase_date": "dd-mm-yyyy",
+                            "amount": int,
+                            "advance_amount":int
+                            "litre": int,
+                            "milk_type": "text",
+                            "when_": "text",
+                            "purchase_time": "hh:mm:ss"
+                            "payment_status":"status"
+                        },
+                        .
+                        .
+                        .
+                    ],
+                    "total amount paid": int,
+                    "total amount unpaid": int,
+                    "total advance": int
+                }
+            or
+            {message} if no purchase done for today
+    ```
+    **Note:-** get all bills based on organization {paid, unpaid and pending payments} 
     <br/>

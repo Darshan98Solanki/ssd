@@ -33,6 +33,7 @@ const makeOrder = zod.object({
     fat:zod.number({message:"fat is required"}).min(1,{message:"Enter valid fat"}),
     fat_price: zod.number({message:"fat_price is required"}).min(1,{message:"Enter valid fat price"}),
     amount: zod.number({message:"amount is required"}).min(1,{message:"Enter valid amount"}),
+    advance_amount: zod.number({message:"amount is required"}).min(0, {message:"Enter valid advance amount"}),
     due_date: zod.string({message:"due date is required"}).date({message:"Enter valid date"}),
     when: zod.string({message:"When option is required"}).min(1,{message:"Enter Valid option morning or evening"}),
     which: zod.string({message:"Which option is required"}).min(1,{message:"Enter valid option cow or bufallow"})
@@ -58,6 +59,7 @@ const purchaseUpdate = zod.object({
     fat:zod.number({message:"fat is required"}).min(1,{message:"Enter valid fat"}),
     fat_price: zod.number({message:"fta price is required"}).min(1,{message:"Enter valid fat price"}),
     amount: zod.number({message:"amount is required"}).min(1,{message:"Enter valid amount"}),
+    advance_amount: zod.number({message:"amount is required"}).min(0, {message:"Enter valid advance amount"}),
     due_date: zod.string({message:"due date is required"}).date({message:"Enter valid date"}),
     when: zod.string({message:"When option is required"}).min(1,{message:"Enter Valid option morning or evening"}),
     which: zod.string({message:"Which option is required"}).min(1,{message:"Enter valid option cow or bufallow"})

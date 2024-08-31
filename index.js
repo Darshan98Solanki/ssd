@@ -350,10 +350,11 @@ app.post('/make_purchase', authenticate, async (req, res) => {
     const fat = parseData.data.fat
     const fat_price = parseData.data.fat_price
     const amount = parseData.data.amount
+    const advanced_amount = parseData.data.advance_amount
     const due_date = parseData.data.due_date
     const when = parseData.data.when
-    const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,due_date,when_,payment_status,purchase_time) VALUES(?,?,?,?,?,?,?,?,?,CONVERT_TZ(NOW(), @@session.time_zone, '+05:30'))"
-    conn.query(query, [customerId,milk_type,litre, fat, fat_price, amount, due_date, when, 'pending'], (err, result) => {
+    const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,advance_amount,due_date,when_,payment_status,purchase_time) VALUES(?,?,?,?,?,?,?,?,?,?,CONVERT_TZ(NOW(), @@session.time_zone, '+05:30'))"
+    conn.query(query, [customerId,milk_type,litre, fat, fat_price, amount, advanced_amount, due_date, when, 'pending'], (err, result) => {
         if (err) {
             res.status(403).json({ message: "Order can't placed" })
             return
@@ -413,13 +414,14 @@ app.put('/update_purchase', authenticate, async (req, res) => {
     const fat = parseData.data.fat
     const fat_price = parseData.data.fat_price
     const amount = parseData.data.amount
+    const advanced_amount = parseData.data.advance_amount
     const due_date = parseData.data.due_date
     const milk_type = parseData.data.which
     const when = parseData.data.when
 
-    const updatePurchase = "UPDATE purchase SET milk_type=?,litre=?, fat=?, fat_price=?, amount=?, due_date=?, when_=? WHERE purchase_id=?"
-
-    conn.query(updatePurchase, [milk_type, litre, fat, fat_price, amount, due_date,when, purchaseId], (err, result) => {
+    const updatePurchase = "UPDATE purchase SET milk_type=?,litre=?, fat=?, fat_price=?, amount=?, advance_amount=?, due_date=?, when_=? WHERE purchase_id=?"
+    console.log(advanced_amount)
+    conn.query(updatePurchase, [milk_type, litre, fat, fat_price, amount, advanced_amount, due_date,when, purchaseId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred" })
             return
@@ -451,7 +453,7 @@ app.get('/get_bills', authenticate, async (req, res) => {
     closeConnection(conn)
 })
 
-//get bills based on organizations
+//get bills based on organizations to list on bill section
 app.get("/get_bills_on_organizations", authenticate, async (req, res)=>{
 
     const data = req.body
@@ -505,6 +507,7 @@ app.delete('/deletepuchaseorder', authenticate, (req, res) => {
     closeConnection(conn)
 })
 
+// make payment status done
 app.put("/paymentdone", authenticate, (req, res) => {
 
     const data = req.body
@@ -619,7 +622,7 @@ app.put('/update_profile', authenticate, async (req, res) => {
     closeConnection(conn)
 })
 
-//get full report details
+//get full report details 
 app.get('/get_full_report', async (req, res) => {
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
@@ -631,14 +634,14 @@ app.get('/get_full_report', async (req, res) => {
 
         const organization = parseData.data.organization
         const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-        const getUserData = "SELECt name, mobile_no, email, advanced_payment FROM customers WHERE organization = ? AND user_id = ?"
+        const getUserData = "SELECt name, mobile_no, email,organization FROM customers WHERE organization = ? AND user_id = ?"
 
         conn.query(getUserData, [organization, userId], (err, customerData) => {
             if (err) {
                 res.status(411).json({ message: "Some error occurred..." })
                 return
             } else {
-                const query = "SELECT p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;"
+                const query = "SELECT p.fat,p.purchase_date,p.amount,p.advance_amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND p.payment_status != 'paid' AND c.organization = ? AND c.user_id = ?;"
                 conn.query(query, [organization, userId], (err, result) => {
                     if (err) {
                         res.status(411).json({ message: "Some error occurred..." })
@@ -649,14 +652,18 @@ app.get('/get_full_report', async (req, res) => {
                             return
                         } else {
                             let totalAmount = 0
-                            result.map(result => totalAmount += result.amount)
-                            if(totalAmount < customerData[0].advanced_payment){
+                            let totalAdvanceAmount = 0
+                            result.map(result => {
+                                totalAmount += result.amount
+                                totalAdvanceAmount += result.advance_amount
+                            })
+                            if(totalAmount < totalAdvanceAmount){
                                 res.status(200).json({message:`Please set advanced payment to below ${totalAmount}`})
                                 return
                             }else{
                                 result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
-                                const grandTotalAmount = totalAmount - customerData[0].advanced_payment
-                                customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount, "grand total": grandTotalAmount}
+                                const grandTotalAmount = totalAmount - totalAdvanceAmount
+                                customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount,"total advance":totalAdvanceAmount, "grand total": grandTotalAmount}
                                 res.status(200).json(customerData)
                                 return
                             }
@@ -697,36 +704,8 @@ app.put("/mark_as_all_paid", authenticate ,async (req, res)=>{
 
 })
 
-// update advance payment amount
-app.put("/update_advanced_payment_amount", authenticate, async (req, res)=>{
-
-    const data = req.body
-    const parseData = checkAdvancedPayment.safeParse(data)
-
-    if (!parseData.success) {
-        res.status(200).json({ message: parseData.error.issues[0].message })
-        return
-    }else{
-        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) }) 
-        const organization = parseData.data.organization
-        const amount = parseData.data.amount
-        const query = "UPDATE customers SET advanced_payment=? WHERE organization=? ANd user_id=?"
-
-        conn.query(query, [amount, organization, userId], (err,  result)=>{
-            if (err) {
-                res.status(411).json({ message: "Some error occurred..." })
-                return
-            }else{
-                res.status(200).json({ message: `Advanced payment ${amount} updated for ${organization}...` })
-                return
-            }
-        })
-    }
-    closeConnection(conn)
-})
-
 //fetch todays purchases/bills
-app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
+app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{   
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
@@ -749,4 +728,84 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
     closeConnection(conn)
 })
 
+// get all bills till now
+app.get('/get_all_bills', authenticate, async(req, res)=>{
+
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+        const query = "SELECT c.organization,p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
+        conn.query(query, [userId], (err, result) => {
+            if (err) {
+                res.status(411).json({ message: "Some error occurred..." })
+                return
+            } else {
+                if (result.length == 0) {
+                    res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
+                    return
+                } else {
+                    let totalAmount = 0
+                    result.map(result => {
+                        totalAmount += result.amount
+                    })
+                    result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
+                    res.status(200).json({"purchases":result, "total amount":totalAmount})
+                    return
+                }
+            }
+        })
+    closeConnection(conn)
+})
+
+//get bills based on organizations to list for report generation {paid, unpaid and overdue}
+app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
+
+    const data = req.body
+    const parseData = checkOrganization.safeParse(data)
+    
+    if (!parseData.success) {
+        res.status(200).json({ message: parseData.error.issues[0].message })
+        return
+    } else {
+
+        const organization = parseData.data.organization
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+        const getUserData = "SELECt name, mobile_no, email,organization FROM customers WHERE organization = ? AND user_id = ?"
+
+        conn.query(getUserData, [organization, userId], (err, customerData) => {
+            if (err) {
+                res.status(411).json({ message: "Some error occurred..." })
+                return
+            } else {
+                const query = "SELECT p.fat,p.purchase_date,p.amount,p.advance_amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.organization = ? AND c.user_id = ?;"
+                conn.query(query, [organization, userId], (err, result) => {
+                    if (err) {
+                        res.status(411).json({ message: "Some error occurred..." })
+                        return
+                    } else {
+                        if (result.length == 0) {
+                            res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
+                            return
+                        } else {
+                            let totalAmountUnpaid = 0
+                            let totalAmountPaid = 0
+                            let totalAdvanceAmount = 0
+                            result.map(result => {
+                                if(result.payment_status == 'paid')
+                                    totalAmountPaid += result.amount
+                                else
+                                    totalAmountUnpaid += result.amount
+
+                                totalAdvanceAmount += result.advance_amount
+                            })
+                            result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
+                            customerData = {"userdata":customerData[0], "purchases":result, "total amount paid":totalAmountPaid,"total amount unpaid":totalAmountUnpaid,"total advance":totalAdvanceAmount}
+                            res.status(200).json(customerData)
+                            return
+                        }
+                    }
+                })
+            }
+        })
+    }
+    closeConnection(conn)
+})
 app.listen(port)
