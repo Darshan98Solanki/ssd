@@ -82,7 +82,6 @@ function getUserIdFromToken(req) {
     })
 }
 
-
 // check purchase status
 
 function checkPurchaseStatus(result) {
@@ -664,7 +663,20 @@ app.get('/get_full_report', async (req, res) => {
                                 result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                                 const grandTotalAmount = totalAmount - totalAdvanceAmount
                                 customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount,"total advance":totalAdvanceAmount, "grand total": grandTotalAmount}
-                                res.status(200).json(customerData)
+                                
+                                //converting data into utf-8 charset
+                                const convertedData = JSON.stringify(customerData)
+                                const utf8encodedData = Buffer.from(convertedData, 'utf-8')
+
+                                // Set the response headers
+                                res.writeHead(200, {
+                                    'Content-Type': 'application/json',
+                                    'Content-Length': utf8encodedData.length,
+                                    'Charset': 'utf-8'
+                                });
+
+                                // Send the UTF-8 encoded JSON data
+                                res.end(utf8encodedData);
                                 return
                             }
                         }
@@ -747,7 +759,21 @@ app.get('/get_all_bills', authenticate, async(req, res)=>{
                         totalAmount += result.amount
                     })
                     result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
-                    res.status(200).json({"purchases":result, "total amount":totalAmount})
+                    
+                    // converting data into utf-8 char set
+                    const data = {"purchases":result, "total amount":totalAmount}
+                    const convertedData = JSON.stringify(data)
+                    const utf8encodedData = Buffer.from(convertedData, 'utf-8')
+
+                    // Set the response headers
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json',
+                        'Content-Length': utf8encodedData.length,
+                        'Charset': 'utf-8'
+                    });
+
+                    // Send the UTF-8 encoded JSON data
+                    res.end(utf8encodedData);
                     return
                 }
             }
@@ -798,7 +824,20 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
                             })
                             result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                             customerData = {"userdata":customerData[0], "purchases":result, "total amount paid":totalAmountPaid,"total amount unpaid":totalAmountUnpaid,"total advance":totalAdvanceAmount}
-                            res.status(200).json(customerData)
+                            
+                            //converting data into utf-8 charset
+                            const convertedData = JSON.stringify(customerData)
+                            const utf8encodedData = Buffer.from(convertedData, 'utf-8')
+
+                            // Set the response headers
+                            res.writeHead(200, {
+                                'Content-Type': 'application/json',
+                                'Content-Length': utf8encodedData.length,
+                                'Charset': 'utf-8'
+                            });
+
+                            // Send the UTF-8 encoded JSON data
+                            res.end(utf8encodedData);
                             return
                         }
                     }
@@ -809,3 +848,4 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
     closeConnection(conn)
 })
 app.listen(port)
+
