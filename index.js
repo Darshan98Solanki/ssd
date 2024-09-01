@@ -379,7 +379,7 @@ app.get("/fetch_single_bill", authenticate, (req, res)=>{
     const organization = parseData.data.organization
     const when = parseData.data.when
     const purchase_date = parseData.data.purchase_date
-    const query = "SELECT p.purchase_id,c.name,c.organization,p.fat_price,p.when_,p.milk_type,DATE_FORMAT(p.due_date, '%Y-%m-%d') as due_date,p.litre,p.fat,p.amount FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.organization=? AND p.purchase_date=? ANd p.when_=?"
+    const query = "SELECT p.purchase_id,c.name,c.organization,p.fat_price,p.when_,p.milk_type,DATE_FORMAT(p.due_date, '%Y-%m-%d') as due_date,p.litre,p.fat,p.amount,p.advance_amount FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.organization=? AND p.purchase_date=? ANd p.when_=?"
 
     conn.query(query, [organization,purchase_date,when], (err, result)=>{
         if(err){
