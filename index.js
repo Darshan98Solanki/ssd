@@ -663,20 +663,21 @@ app.get('/get_full_report', async (req, res) => {
                                 result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                                 const grandTotalAmount = totalAmount - totalAdvanceAmount
                                 customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount,"total advance":totalAdvanceAmount, "grand total": grandTotalAmount}
-                                
-                                //converting data into utf-8 charset
-                                const convertedData = JSON.stringify(customerData)
-                                const utf8encodedData = Buffer.from(convertedData, 'utf-8')
+                                res.status(200).json(customerData)
 
-                                // Set the response headers
-                                res.writeHead(200, {
-                                    'Content-Type': 'application/json',
-                                    'Content-Length': utf8encodedData.length,
-                                    'Charset': 'utf-8'
-                                });
+                                // //converting data into utf-8 charset
+                                // const convertedData = JSON.stringify(customerData)
+                                // const utf8encodedData = Buffer.from(convertedData, 'utf-8')
 
-                                // Send the UTF-8 encoded JSON data
-                                res.end(utf8encodedData);
+                                // // Set the response headers
+                                // res.writeHead(200, {
+                                //     'Content-Type': 'application/json',
+                                //     'Content-Length': utf8encodedData.length,
+                                //     'Charset': 'utf-8'
+                                // });
+
+                                // // Send the UTF-8 encoded JSON data
+                                // res.end(utf8encodedData);
                                 return
                             }
                         }
