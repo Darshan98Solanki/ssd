@@ -129,7 +129,7 @@
             "fat": int,
             "fat_price": int,
             "amount": int,
-            "advace_amount": int,
+            "advance_amount": int,
             "due_date":"yyyy-mm-dd",
             "when":"text",
             "which":"text",
