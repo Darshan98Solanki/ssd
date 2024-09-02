@@ -450,16 +450,23 @@
                             "organization": "text"
                             "fat": int,
                             "purchase_date": "dd-mm-yyyy",
+                            "advance_amount": int,
+                            "due_date": "dd-mm-yyyy",
                             "amount": int,
                             "litre": int,
                             "milk_type": "text",
                             "when_": "text",
-                            "purchase_time": "hh:mm:ss"
+                            "purchase_time": "hh:mm:ss",
+                            "payment_status": "text"
                         },
                         .
                         .
                         .
-                    ]
+                    ],
+                    "total amount": int,
+                    "total advnace": int,
+                    "total paid": int,
+                    "total unpaid": int
                 
                 }
             or
@@ -491,6 +498,7 @@
                         {
                             "fat": int,
                             "purchase_date": "dd-mm-yyyy",
+                            "due_date": "dd-mm-yyyy",
                             "amount": int,
                             "advance_amount":int
                             "litre": int,

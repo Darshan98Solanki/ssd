@@ -664,20 +664,6 @@ app.get('/get_full_report', async (req, res) => {
                                 const grandTotalAmount = totalAmount - totalAdvanceAmount
                                 customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount,"total advance":totalAdvanceAmount, "grand total": grandTotalAmount}
                                 res.status(200).json(customerData)
-
-                                // //converting data into utf-8 charset
-                                // const convertedData = JSON.stringify(customerData)
-                                // const utf8encodedData = Buffer.from(convertedData, 'utf-8')
-
-                                // // Set the response headers
-                                // res.writeHead(200, {
-                                //     'Content-Type': 'application/json',
-                                //     'Content-Length': utf8encodedData.length,
-                                //     'Charset': 'utf-8'
-                                // });
-
-                                // // Send the UTF-8 encoded JSON data
-                                // res.end(utf8encodedData);
                                 return
                             }
                         }
@@ -745,7 +731,7 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
 app.get('/get_all_bills', authenticate, async(req, res)=>{
 
         const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-        const query = "SELECT c.organization,p.fat,p.purchase_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
+        const query = "SELECT c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
         conn.query(query, [userId], (err, result) => {
             if (err) {
                 res.status(411).json({ message: "Some error occurred..." })
@@ -756,25 +742,24 @@ app.get('/get_all_bills', authenticate, async(req, res)=>{
                     return
                 } else {
                     let totalAmount = 0
+                    let totalAdvanceAmount = 0
+                    let totalPaid = 0
+                    let totalUnpaid = 0
+                    // console.log(result)
                     result.map(result => {
                         totalAmount += result.amount
+                        if(result.payment_status == 'paid')
+                            totalPaid += result.amount
+                        else
+                            totalUnpaid+=result.amount
+                        totalAdvanceAmount += result.advance_amount
+                        result.purchase_date = formatDate(result.purchase_date)
+                        checkPurchaseStatus(result)
+                        result.due_date = formatDate(result.due_date)
                     })
-                    result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                     
-                    // converting data into utf-8 char set
-                    const data = {"purchases":result, "total amount":totalAmount}
-                    const convertedData = JSON.stringify(data)
-                    const utf8encodedData = Buffer.from(convertedData, 'utf-8')
-
-                    // Set the response headers
-                    res.writeHead(200, {
-                        'Content-Type': 'application/json',
-                        'Content-Length': utf8encodedData.length,
-                        'Charset': 'utf-8'
-                    });
-
-                    // Send the UTF-8 encoded JSON data
-                    res.end(utf8encodedData);
+                    const data = {"purchases":result,"total amount":totalAmount,"total advnace":totalAdvanceAmount, "total paid":totalPaid, "total unpaid":totalUnpaid}
+                    res.status(200).json(data)
                     return
                 }
             }
@@ -802,7 +787,7 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
                 res.status(411).json({ message: "Some error occurred..." })
                 return
             } else {
-                const query = "SELECT p.fat,p.purchase_date,p.amount,p.advance_amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.organization = ? AND c.user_id = ?;"
+                const query = "SELECT p.fat,p.purchase_date,p.due_date,p.amount,p.advance_amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.organization = ? AND c.user_id = ?;"
                 conn.query(query, [organization, userId], (err, result) => {
                     if (err) {
                         res.status(411).json({ message: "Some error occurred..." })
@@ -822,23 +807,13 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
                                     totalAmountUnpaid += result.amount
 
                                 totalAdvanceAmount += result.advance_amount
+                                result.purchase_date = formatDate(result.purchase_date)
+                                checkPurchaseStatus(result)
+                                result.due_date = formatDate(result.due_date)
                             })
-                            result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
                             customerData = {"userdata":customerData[0], "purchases":result, "total amount paid":totalAmountPaid,"total amount unpaid":totalAmountUnpaid,"total advance":totalAdvanceAmount}
                             
-                            //converting data into utf-8 charset
-                            const convertedData = JSON.stringify(customerData)
-                            const utf8encodedData = Buffer.from(convertedData, 'utf-8')
-
-                            // Set the response headers
-                            res.writeHead(200, {
-                                'Content-Type': 'application/json',
-                                'Content-Length': utf8encodedData.length,
-                                'Charset': 'utf-8'
-                            });
-
-                            // Send the UTF-8 encoded JSON data
-                            res.end(utf8encodedData);
+                            res.status(200).json(customerData)
                             return
                         }
                     }
