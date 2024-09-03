@@ -6,6 +6,7 @@ const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile
 const app = express()
 const port = 3000
 const PDFDocument = require('pdfkit-table')
+const { Readable } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
@@ -59,31 +60,31 @@ function setHeaderFooter(pdfDoc) {
 }
 
 //functions to generate pdf
-function generatePDF(data, callback) {
-    const pdfDoc = new PDFDocument();
-    const filePath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
+// function generatePDF(data, callback) {
+//     const pdfDoc = new PDFDocument();
+//     const filePath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
 
-    const stream = fs.createWriteStream(filePath);
-    pdfDoc.pipe(stream);
+//     const stream = fs.createWriteStream(filePath);
+//     pdfDoc.pipe(stream);
 
-    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
-    pdfDoc.registerFont('GujaratiFont', fontPath);
+//     const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
+//     pdfDoc.registerFont('GujaratiFont', fontPath);
 
-    // Set header/footer, if needed
-    setHeaderFooter(pdfDoc);
+//     // Set header/footer, if needed
+//     setHeaderFooter(pdfDoc);
 
-    pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
-    pdfDoc.end();
+//     pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
+//     pdfDoc.end();
 
-    // Wait for the PDF file to be fully written
-    stream.on('finish', () => {
-        callback(null, filePath); // Pass null for no error
-    });
+//     // Wait for the PDF file to be fully written
+//     stream.on('finish', () => {
+//         callback(null, filePath); // Pass null for no error
+//     });
 
-    stream.on('error', (err) => {
-        callback(err); // Pass error if stream fails
-    });
-}
+//     stream.on('error', (err) => {
+//         callback(err); // Pass error if stream fails
+//     });
+// }
 
 // formate date into dd-mm-yyyy
 function formatDate(dateString) {
@@ -863,27 +864,25 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 
 app.get('/tmp', (req, res) => {
     const name = "વંશ"; // Data to be included in the PDF
-    generatePDF(name, (err, filePath) => {
-        if (err) {
-            console.error('Error generating PDF:', err);
-            res.status(500).json({ message: "Error generating PDF" });
-            return;
-        }
+    const pdfDoc = new PDFDocument();
 
-        // Serve the file after it's fully generated
-        res.sendFile(filePath, (err) => {
-            if (err) {
-                console.error('Error sending file:', err);
-                res.status(500).send('Error sending file');
-            } else {
-                console.log('PDF sent successfully');
-                // Optionally clean up the file after sending
-                fs.unlink(filePath, (unlinkErr) => {
-                    if (unlinkErr) console.error('Error deleting file:', unlinkErr);
-                });
-            }
-        });
-    });
+    // Set response headers to indicate a PDF file
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=SampleDocument.pdf');
+
+    // Pipe the PDF document directly to the response
+    pdfDoc.pipe(res);
+
+    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
+    pdfDoc.registerFont('GujaratiFont', fontPath);
+
+    // Set header/footer, if needed
+    setHeaderFooter(pdfDoc);
+
+    pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 500);
+
+    // Finalize the PDF and send it
+    pdfDoc.end();
 })
 
 
