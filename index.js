@@ -2,10 +2,10 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const conn = require('./connection.js')
-const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
+const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer, checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const port = 3000
-const PDFDOC = require('pdfkit-table')
+const PDFDocument = require('pdfkit-table')
 const fs = require('fs');
 const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
@@ -48,9 +48,9 @@ function closeConnection(conn) {
 }
 
 function setHeaderFooter(pdfDoc) {
-    pdfDoc.image('./reports/basefiles/Header.jpg', 0, 0, 
+    pdfDoc.image('./reports/basefiles/Header.jpg', 0, 0,
         {
-            fit:[pdfDoc.page.width,300]
+            fit: [pdfDoc.page.width, 300]
         })
     pdfDoc.image('./reports/basefiles/Footer.jpg', 0, pdfDoc.page.height - 100,
         {
@@ -59,25 +59,32 @@ function setHeaderFooter(pdfDoc) {
 }
 
 //functions to generate pdf
-function generatePDF(data, callback){
+function generatePDF(data, res) {
+    const pdfDoc = new PDFDocument();
+    const filePath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
 
-    let pdfDoc = new PDFDOC
-    const filePath = path.join(__dirname,'./reports/SampleDocument.pdf')
-    
-    const stream = fs.createWriteStream(filePath)
-    pdfDoc.pipe(stream)
+    const stream = fs.createWriteStream(filePath);
+    pdfDoc.pipe(stream);
 
-    const fontPath = path.join(__dirname, './reports/basefiles/NotoSansGujarati-VariableFont_wdth,wght.ttf');  // Replace with your font path
-    pdfDoc.registerFont('GujaratiFont', fontPath)
-    setHeaderFooter(pdfDoc)
+    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
+    pdfDoc.registerFont('GujaratiFont', fontPath);
+
+    // Set header/footer, if needed
+    setHeaderFooter(pdfDoc);
 
     pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
-    pdfDoc.end()
+    pdfDoc.end();
 
+    // Wait for the PDF file to be fully written
     stream.on('finish', () => {
-        callback(filePath)  // filePath is passed to the callback
+        // Serve the file after it's fully generated
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).send('Error sending file');
+            }
+        });
     });
-
 }
 
 // formate date into dd-mm-yyyy
@@ -135,7 +142,7 @@ function getCustomerIdFromOrganization(organization) {
             if (err) {
                 reject({ code: err.code, message: err.message })
             } else {
-                resolve({data:result[0]["customer_id"]})
+                resolve({ data: result[0]["customer_id"] })
             }
         })
     })
@@ -156,7 +163,7 @@ function checkCustomerExists(email) {
 }
 
 // check organization is registered or not
-function checkOrganizationRegistration(organization){
+function checkOrganizationRegistration(organization) {
 
     const sql = "SELECT COUNT(organization) FROM customers WHERE organization=?"
     return new Promise((resolve, reject) => {
@@ -291,20 +298,20 @@ app.post("/forgot_password", async (req, res) => {
 })
 
 //add customer
-app.post("/add_customer", authenticate, async (req, res)=>{
+app.post("/add_customer", authenticate, async (req, res) => {
 
     const data = req.body
     const parseData = addCustomer.safeParse(data)
-    
-    if(!parseData.success){
-        res.status(411).json({"error":parseData.error.issues[0].message})
+
+    if (!parseData.success) {
+        res.status(411).json({ "error": parseData.error.issues[0].message })
         return
     }
-    
+
     const organization = parseData.data.organization
     const checkOrganization = await checkOrganizationRegistration(organization).then(response => { return response }).catch(err => { res.status(500).json({ message: "Somer error occured" }) })
-    
-    if(!checkOrganization){
+
+    if (!checkOrganization) {
         const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(500).json({ message: "Some error occured" }) })
         const name = parseData.data.name
         const phone_number = parseData.data.phone_number
@@ -316,19 +323,19 @@ app.post("/add_customer", authenticate, async (req, res)=>{
             if (err) {
                 res.status(403).json({ message: "Data cannot be inserted" })
                 return
-            }else{
-                res.status(200).json({message: "customer added successfully"})
-                return 
+            } else {
+                res.status(200).json({ message: "customer added successfully" })
+                return
             }
         })
-    }else{
-        res.status(401).json({message: "Organization already in use"})
+    } else {
+        res.status(401).json({ message: "Organization already in use" })
         return
     }
     closeConnection(conn)
 })
 
-app.get("/get_organizations", authenticate, async (req, res)=>{
+app.get("/get_organizations", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(500).json({ message: "Some error occured" }) })
     const query = "SELECT name,organization FROM customers WHERE user_id = ?"
@@ -337,7 +344,7 @@ app.get("/get_organizations", authenticate, async (req, res)=>{
         if (err) {
             res.status(403).json({ message: "Some error occure load organization" })
             return
-        }else{
+        } else {
             res.status(200).json({ data: result })
             return
         }
@@ -356,7 +363,7 @@ app.get("/get_standard_price", authenticate, async (req, res) => {
             res.status(411).json({ message: "Some error occured" })
             return
         } else {
-            res.status(200).json({ standardPriceCow: (result[0]["standard_price_cow"]), standardPriceBuffalo:(result[0]["standard_price_buffalo"]) })
+            res.status(200).json({ standardPriceCow: (result[0]["standard_price_cow"]), standardPriceBuffalo: (result[0]["standard_price_buffalo"]) })
             return
         }
     })
@@ -385,7 +392,7 @@ app.post('/make_purchase', authenticate, async (req, res) => {
     const due_date = parseData.data.due_date
     const when = parseData.data.when
     const query = "INSERT INTO purchase(customer_id,milk_type,litre,fat,fat_price,amount,advance_amount,due_date,when_,payment_status,purchase_time) VALUES(?,?,?,?,?,?,?,?,?,?,CONVERT_TZ(NOW(), @@session.time_zone, '+05:30'))"
-    conn.query(query, [customerId,milk_type,litre, fat, fat_price, amount, advanced_amount, due_date, when, 'pending'], (err, result) => {
+    conn.query(query, [customerId, milk_type, litre, fat, fat_price, amount, advanced_amount, due_date, when, 'pending'], (err, result) => {
         if (err) {
             res.status(403).json({ message: "Order can't placed" })
             return
@@ -398,12 +405,12 @@ app.post('/make_purchase', authenticate, async (req, res) => {
 })
 
 // fetch single bill
-app.get("/fetch_single_bill", authenticate, (req, res)=>{
+app.get("/fetch_single_bill", authenticate, (req, res) => {
 
     const data = req.body
     const parseData = checkSingleFetchOrder.safeParse(data)
 
-    if(!parseData.success){
+    if (!parseData.success) {
         res.status(411).json(parseData.error.issues[0].message)
         return
     }
@@ -413,14 +420,14 @@ app.get("/fetch_single_bill", authenticate, (req, res)=>{
     const purchase_date = parseData.data.purchase_date
     const query = "SELECT p.purchase_id,c.name,c.organization,p.fat_price,p.when_,p.milk_type,DATE_FORMAT(p.due_date, '%Y-%m-%d') as due_date,p.litre,p.fat,p.amount,p.advance_amount FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.organization=? AND p.purchase_date=? ANd p.when_=?"
 
-    conn.query(query, [organization,purchase_date,when], (err, result)=>{
-        if(err){
+    conn.query(query, [organization, purchase_date, when], (err, result) => {
+        if (err) {
             res.status(403).json({ message: "Some error occured" })
             return
-        }else{
-            if(result.length == 0){
+        } else {
+            if (result.length == 0) {
                 res.status(401).json({ message: "Please select valid organization, time and purchase date" })
-            }else{
+            } else {
                 res.status(200).json({ data: result })
             }
             return
@@ -452,11 +459,11 @@ app.put('/update_purchase', authenticate, async (req, res) => {
 
     const updatePurchase = "UPDATE purchase SET milk_type=?,litre=?, fat=?, fat_price=?, amount=?, advance_amount=?, due_date=?, when_=? WHERE purchase_id=?"
     console.log(advanced_amount)
-    conn.query(updatePurchase, [milk_type, litre, fat, fat_price, amount, advanced_amount, due_date,when, purchaseId], (err, result) => {
+    conn.query(updatePurchase, [milk_type, litre, fat, fat_price, amount, advanced_amount, due_date, when, purchaseId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred" })
             return
-        }else{
+        } else {
             res.status(200).json({ message: "Record Updated successfully" })
             return
         }
@@ -485,12 +492,12 @@ app.get('/get_bills', authenticate, async (req, res) => {
 })
 
 //get bills based on organizations to list on bill section
-app.get("/get_bills_on_organizations", authenticate, async (req, res)=>{
+app.get("/get_bills_on_organizations", authenticate, async (req, res) => {
 
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
 
-    if(!parseData.success){
+    if (!parseData.success) {
         res.status(411).json({ message: parseData.error.issues[0].message })
         return
     }
@@ -657,7 +664,7 @@ app.put('/update_profile', authenticate, async (req, res) => {
 app.get('/get_full_report', async (req, res) => {
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
-    
+
     if (!parseData.success) {
         res.status(200).json({ message: parseData.error.issues[0].message })
         return
@@ -688,13 +695,13 @@ app.get('/get_full_report', async (req, res) => {
                                 totalAmount += result.amount
                                 totalAdvanceAmount += result.advance_amount
                             })
-                            if(totalAmount < totalAdvanceAmount){
-                                res.status(200).json({message:`Please set advanced payment to below ${totalAmount}`})
+                            if (totalAmount < totalAdvanceAmount) {
+                                res.status(200).json({ message: `Please set advanced payment to below ${totalAmount}` })
                                 return
-                            }else{
-                                result.map(result => {result.purchase_date = formatDate(result.purchase_date)})
+                            } else {
+                                result.map(result => { result.purchase_date = formatDate(result.purchase_date) })
                                 const grandTotalAmount = totalAmount - totalAdvanceAmount
-                                customerData = {"userdata":customerData[0], "purchases":result, "total amount":totalAmount,"total advance":totalAdvanceAmount, "grand total": grandTotalAmount}
+                                customerData = { "userdata": customerData[0], "purchases": result, "total amount": totalAmount, "total advance": totalAdvanceAmount, "grand total": grandTotalAmount }
                                 res.status(200).json(customerData)
                                 return
                             }
@@ -708,16 +715,16 @@ app.get('/get_full_report', async (req, res) => {
 })
 
 // mark as paid all bills
-app.put("/mark_as_all_paid", authenticate ,async (req, res)=>{
-  
+app.put("/mark_as_all_paid", authenticate, async (req, res) => {
+
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
 
     if (!parseData.success) {
         res.status(200).json({ message: parseData.error.issues[0].message })
         return
-    }else{
-        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) }) 
+    } else {
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
         const organization = parseData.data.organization
         const query = "UPDATE purchase SET payment_status='paid' WHERE purchase_id IN(SELECT p.purchase_id FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ? AND organization=?);"
 
@@ -725,7 +732,7 @@ app.put("/mark_as_all_paid", authenticate ,async (req, res)=>{
             if (err) {
                 res.status(411).json({ message: "Some error occurred..." })
                 return
-            }else{
+            } else {
                 res.status(200).json({ message: `All record are updated for ${organization}...` })
                 return
             }
@@ -736,21 +743,21 @@ app.put("/mark_as_all_paid", authenticate ,async (req, res)=>{
 })
 
 //fetch todays purchases/bills
-app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{   
+app.get("/fetch_todays_bills", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
     const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
 
-    conn.query(query, [userId, today], (err, result)=>{
+    conn.query(query, [userId, today], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred..." })
             return
-        }else{
-            if(result.length == 0){
-                res.status(200).json({ message:`No purchase make on ${today}`})
+        } else {
+            if (result.length == 0) {
+                res.status(200).json({ message: `No purchase make on ${today}` })
                 return
-            }else{
+            } else {
                 res.status(200).json({ data: result })
                 return
             }
@@ -760,51 +767,51 @@ app.get("/fetch_todays_bills", authenticate, async  (req, res)=>{
 })
 
 // get all bills till now
-app.get('/get_all_bills', authenticate, async(req, res)=>{
+app.get('/get_all_bills', authenticate, async (req, res) => {
 
-        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-        const query = "SELECT c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
-        conn.query(query, [userId], (err, result) => {
-            if (err) {
-                res.status(411).json({ message: "Some error occurred..." })
+    const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+    const query = "SELECT c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
+    conn.query(query, [userId], (err, result) => {
+        if (err) {
+            res.status(411).json({ message: "Some error occurred..." })
+            return
+        } else {
+            if (result.length == 0) {
+                res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
                 return
             } else {
-                if (result.length == 0) {
-                    res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
-                    return
-                } else {
-                    let totalAmount = 0
-                    let totalAdvanceAmount = 0
-                    let totalPaid = 0
-                    let totalUnpaid = 0
-                    
-                    result.map(result => {
-                        totalAmount += result.amount
-                        if(result.payment_status == 'paid')
-                            totalPaid += result.amount
-                        else
-                            totalUnpaid+=result.amount
-                        totalAdvanceAmount += result.advance_amount
-                        result.purchase_date = formatDate(result.purchase_date)
-                        checkPurchaseStatus(result)
-                        result.due_date = formatDate(result.due_date)
-                    })
-                    
-                    const data = {"purchases":result,"total amount":totalAmount,"total advnace":totalAdvanceAmount, "total paid":totalPaid, "total unpaid":totalUnpaid}
-                    res.status(200).json(data)
-                    return
-                }
+                let totalAmount = 0
+                let totalAdvanceAmount = 0
+                let totalPaid = 0
+                let totalUnpaid = 0
+
+                result.map(result => {
+                    totalAmount += result.amount
+                    if (result.payment_status == 'paid')
+                        totalPaid += result.amount
+                    else
+                        totalUnpaid += result.amount
+                    totalAdvanceAmount += result.advance_amount
+                    result.purchase_date = formatDate(result.purchase_date)
+                    checkPurchaseStatus(result)
+                    result.due_date = formatDate(result.due_date)
+                })
+
+                const data = { "purchases": result, "total amount": totalAmount, "total advnace": totalAdvanceAmount, "total paid": totalPaid, "total unpaid": totalUnpaid }
+                res.status(200).json(data)
+                return
             }
-        })
+        }
+    })
     closeConnection(conn)
 })
 
 //get bills based on organizations to list for report generation {paid, unpaid and overdue}
-app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
+app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 
     const data = req.body
     const parseData = checkOrganization.safeParse(data)
-    
+
     if (!parseData.success) {
         res.status(200).json({ message: parseData.error.issues[0].message })
         return
@@ -833,7 +840,7 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
                             let totalAmountPaid = 0
                             let totalAdvanceAmount = 0
                             result.map(result => {
-                                if(result.payment_status == 'paid')
+                                if (result.payment_status == 'paid')
                                     totalAmountPaid += result.amount
                                 else
                                     totalAmountUnpaid += result.amount
@@ -843,8 +850,8 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
                                 checkPurchaseStatus(result)
                                 result.due_date = formatDate(result.due_date)
                             })
-                            customerData = {"userdata":customerData[0], "purchases":result, "total amount paid":totalAmountPaid,"total amount unpaid":totalAmountUnpaid,"total advance":totalAdvanceAmount}
-                            
+                            customerData = { "userdata": customerData[0], "purchases": result, "total amount paid": totalAmountPaid, "total amount unpaid": totalAmountUnpaid, "total advance": totalAdvanceAmount }
+
                             res.status(200).json(customerData)
                             return
                         }
@@ -856,25 +863,9 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
     closeConnection(conn)
 })
 
-app.get('/tmp', (req, res)=>{
-
-    const pdfPath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
-    const name = "રામ"
-    fs.readFile(pdfPath, (err, data) => {
-        if (err) {
-            res.status(500).json({ message: "Error reading the PDF file" });
-            return;
-        }
-        generatePDF(name, (filePath) => {
-            // Send the PDF file as a response using the filePath
-                res.sendFile(filePath, (err) => {
-                if(err) {
-                    console.error('Error sending file:', err);
-                    res.status(500).send('Error sending file');
-                }
-            })
-        })
-    })
+app.get('/tmp', (req, res) => {
+    const name = "વંશ"; // Data to be included in the PDF
+    generatePDF(name, res);
 })
 
 
