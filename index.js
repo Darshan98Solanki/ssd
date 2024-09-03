@@ -5,6 +5,8 @@ const conn = require('./connection.js')
 const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const port = 3000
+const fs = require('fs');
+const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
 
 app.use(express.json())
@@ -821,5 +823,21 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
     }
     closeConnection(conn)
 })
+
+app.get('/tmp', (req, res)=>{
+
+    const pdfPath = path.join(__dirname, 'reports', 'full_report.pdf');
+    
+    fs.readFile(pdfPath, (err, data) => {
+        if (err) {
+            res.status(500).json({ message: "Error reading the PDF file" });
+            return;
+        }
+        res.contentType("application/pdf");
+        res.send(data);
+    });
+})
+
+
 app.listen(port)
 
