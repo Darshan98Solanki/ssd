@@ -4,11 +4,9 @@ const jwt = require('jsonwebtoken')
 const conn = require('./connection.js')
 const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
-const bodyParser = require('body-parser')
 const port = 3000
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
 
-app.use(bodyParser.urlencoded({ extended: true }))
 app.use(express.json())
 
 //************      helper functions start        ************
@@ -745,7 +743,7 @@ app.get('/get_all_bills', authenticate, async(req, res)=>{
                     let totalAdvanceAmount = 0
                     let totalPaid = 0
                     let totalUnpaid = 0
-                    // console.log(result)
+                    
                     result.map(result => {
                         totalAmount += result.amount
                         if(result.payment_status == 'paid')
