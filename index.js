@@ -59,7 +59,7 @@ function setHeaderFooter(pdfDoc) {
 }
 
 //functions to generate pdf
-function generatePDF(data, res) {
+function generatePDF(data, callback) {
     const pdfDoc = new PDFDocument();
     const filePath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
 
@@ -77,13 +77,11 @@ function generatePDF(data, res) {
 
     // Wait for the PDF file to be fully written
     stream.on('finish', () => {
-        // Serve the file after it's fully generated
-        res.sendFile(filePath, (err) => {
-            if (err) {
-                console.error('Error sending file:', err);
-                res.status(500).send('Error sending file');
-            }
-        });
+        callback(null, filePath); // Pass null for no error
+    });
+
+    stream.on('error', (err) => {
+        callback(err); // Pass error if stream fails
     });
 }
 
@@ -865,7 +863,27 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 
 app.get('/tmp', (req, res) => {
     const name = "વંશ"; // Data to be included in the PDF
-    generatePDF(name, res);
+    generatePDF(name, (err, filePath) => {
+        if (err) {
+            console.error('Error generating PDF:', err);
+            res.status(500).json({ message: "Error generating PDF" });
+            return;
+        }
+
+        // Serve the file after it's fully generated
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).send('Error sending file');
+            } else {
+                console.log('PDF sent successfully');
+                // Optionally clean up the file after sending
+                fs.unlink(filePath, (unlinkErr) => {
+                    if (unlinkErr) console.error('Error deleting file:', unlinkErr);
+                });
+            }
+        });
+    });
 })
 
 
