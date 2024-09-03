@@ -864,25 +864,39 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 
 app.get('/tmp', (req, res) => {
     const name = "વંશ"; // Data to be included in the PDF
-    const pdfDoc = new PDFDocument();
 
-    // Set response headers to indicate a PDF file
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=SampleDocument.pdf');
+    try {
+        // Start PDF document generation
+        const pdfDoc = new PDFDocument();
 
-    // Pipe the PDF document directly to the response
-    pdfDoc.pipe(res);
+        // Set headers for the response
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=SampleDocument.pdf');
 
-    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
-    pdfDoc.registerFont('GujaratiFont', fontPath);
+        // Stream the PDF document to the response
+        pdfDoc.pipe(res);
 
-    // Set header/footer, if needed
-    setHeaderFooter(pdfDoc);
+        const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
+        pdfDoc.registerFont('GujaratiFont', fontPath);
 
-    pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 500);
+        // Set header/footer, if needed
+        setHeaderFooter(pdfDoc);
 
-    // Finalize the PDF and send it
-    pdfDoc.end();
+        pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 500);
+
+        // Finalize the PDF and send it
+        pdfDoc.end();
+
+        // Listen for stream finish to ensure proper closure
+        res.on('finish', () => {
+            console.log('PDF streamed successfully.');
+        });
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).send('Internal Server Error');
+    }
+
 })
 
 
