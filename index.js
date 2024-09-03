@@ -59,9 +59,24 @@ function setHeaderFooter(pdfDoc) {
 }
 
 //functions to generate pdf
-function generatePDF(data){
+function generatePDF(data, callback){
 
+    let pdfDoc = new PDFDOC
+    const filePath = path.join(__dirname,'./reports/SampleDocument.pdf')
     
+    const stream = fs.createWriteStream(filePath)
+    pdfDoc.pipe(stream)
+
+    const fontPath = path.join(__dirname, './reports/basefiles/NotoSansGujarati-VariableFont_wdth,wght.ttf');  // Replace with your font path
+    pdfDoc.registerFont('GujaratiFont', fontPath)
+    setHeaderFooter(pdfDoc)
+
+    pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
+    pdfDoc.end()
+
+    stream.on('finish', () => {
+        callback(filePath)  // filePath is passed to the callback
+    });
 
 }
 
@@ -845,20 +860,21 @@ app.get('/tmp', (req, res)=>{
 
     const pdfPath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
     const name = "રામ"
-    
-    let pdfDoc = new PDFDOC
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename=output.pdf');
-    
-    pdfDoc.pipe(res);
-
-    const fontPath = path.join(__dirname, './reports/basefiles/NotoSansGujarati-VariableFont_wdth,wght.ttf');  // Replace with your font path
-    pdfDoc.registerFont('GujaratiFont', fontPath);
-    setHeaderFooter(pdfDoc)
-
-    pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 500);
-    pdfDoc.end();
-    
+    fs.readFile(pdfPath, (err, data) => {
+        if (err) {
+            res.status(500).json({ message: "Error reading the PDF file" });
+            return;
+        }
+        generatePDF(name, (filePath) => {
+            // Send the PDF file as a response using the filePath
+                res.sendFile(filePath, (err) => {
+                if(err) {
+                    console.error('Error sending file:', err);
+                    res.status(500).send('Error sending file');
+                }
+            })
+        })
+    })
 })
 
 
