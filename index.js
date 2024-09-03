@@ -5,6 +5,7 @@ const conn = require('./connection.js')
 const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer,checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const port = 3000
+const PDFDOC = require('pdfkit')
 const fs = require('fs');
 const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
@@ -46,6 +47,16 @@ function closeConnection(conn) {
     });
 }
 
+//functions to generate pdf
+function generatePDF(data){
+
+    let pdfDoc = new PDFDOC
+    pdfDoc.pipe(fs.createWriteStream('./reports/SampleDocument.pdf'));
+    pdfDoc.text("My Sample PDF Document");
+    pdfDoc.end();
+
+}
+
 // formate date into dd-mm-yyyy
 function formatDate(dateString) {
     const date = new Date(dateString);
@@ -55,7 +66,6 @@ function formatDate(dateString) {
 
     return `${day}-${month}-${year}`;
 }
-
 
 // get user id from token
 function getUserIdFromToken(req) {
@@ -83,7 +93,6 @@ function getUserIdFromToken(req) {
 }
 
 // check purchase status
-
 function checkPurchaseStatus(result) {
 
     const due_date = result.due_date
@@ -826,13 +835,14 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res)=>{
 
 app.get('/tmp', (req, res)=>{
 
-    const pdfPath = path.join(__dirname, 'reports', 'full_report.pdf');
+    const pdfPath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
     
     fs.readFile(pdfPath, (err, data) => {
         if (err) {
             res.status(500).json({ message: "Error reading the PDF file" });
             return;
         }
+        generatePDF("lol")
         res.contentType("application/pdf");
         res.send(data);
     });
