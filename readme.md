@@ -417,6 +417,7 @@
         Returns:-{
                     "data": [
                         {
+                            "email":"text",
                             "organization": "text",
                             "when_": "text",
                             "milk_type": "text",
@@ -446,7 +447,8 @@
         Returns:-{
                     
                     "purchases": [
-                        {
+                        {   
+                            "email":"text",
                             "organization": "text"
                             "fat": int,
                             "purchase_date": "dd-mm-yyyy",
