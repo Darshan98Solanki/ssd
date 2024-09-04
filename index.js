@@ -58,12 +58,15 @@ function setHeaderFooter(pdfDoc) {
         })
 }
 
-function generatePDF(pdfDoc, name) {
 
+function generatePDF(data){
+    
+    let pdfDoc = new PDFDocument
+    pdfDoc.pipe(fs.createWriteStream('./reports/Bill.pdf'));
     const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf')
-    pdfDoc.registerFont('GujaratiFont', fontPath)
-    setHeaderFooter(pdfDoc)
-    pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 200);
+    pdfDoc.registerFont('GujaratiFont', fontPath);
+    pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
+    pdfDoc.end();
 
 }
 
@@ -881,13 +884,18 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 })
 
 app.get('/tmp', (req, res) => {
-    const name = "વંશ";
-    
-    let pdfDoc = new PDFDocument
-    pdfDoc.pipe(fs.createWriteStream('./reports/Bill.pdf'))
-    generatePDF(pdfDoc, name)
-    pdfDoc.end()
-    res.status(200).json('pdf updated successfully')
+    const name = req.body.name
+    const pdfPath = path.join(__dirname, 'reports', 'Bill.pdf')
+
+    fs.readFile(pdfPath, (err, data) => {
+        if (err) {
+            res.status(500).json({ message: "Error reading the PDF file" })
+            return
+        }
+        generatePDF(name)
+        res.contentType("application/pdf");
+        res.send(data)
+    });
 })
 
 app.listen(port)
