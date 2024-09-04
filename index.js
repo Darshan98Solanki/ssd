@@ -6,7 +6,6 @@ const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile
 const app = express()
 const port = 3000
 const PDFDocument = require('pdfkit-table')
-const { Readable } = require('stream');
 const fs = require('fs');
 const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
@@ -57,6 +56,15 @@ function setHeaderFooter(pdfDoc) {
         {
             fit: [pdfDoc.page.width, 300],
         })
+}
+
+function generatePDF(pdfDoc, name) {
+
+    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf')
+    pdfDoc.registerFont('GujaratiFont', fontPath)
+    setHeaderFooter(pdfDoc)
+    pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 200);
+
 }
 
 //functions to generate pdf
@@ -859,44 +867,29 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
             }
         })
     }
+    // var path = require('path');
+    // var file = path.join(__dirname, 'file.pdf');
+    // res.download(file, function (err) {
+    //     if (err) {
+    //         console.log("Error");
+    //         console.log(err);
+    //     } else {
+    //         console.log("Success");
+    //     }
+    // });
     closeConnection(conn)
 })
 
 app.get('/tmp', (req, res) => {
-    const name = "વંશ"; // Data to be included in the PDF
-    // const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
-    // pdfDoc.registerFont('GujaratiFont', fontPath);
+    const name = "વંશ";
+    const pdfPath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
 
-    // // Set header/footer, if needed
-    // setHeaderFooter(pdfDoc);
-
-    // pdfDoc.font('GujaratiFont').fontSize(20).text(name, 100, 500);
-
-    try {
-        // Create a new PDF document
-        const pdfDoc = new PDFDocument();
-
-        // Set headers for the response
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=SampleDocument.pdf');
-
-        // Pipe the PDF document to the response stream
-        pdfDoc.pipe(res);
-        setHeaderFooter(pdfDoc)
-        // Add content to the PDF (ensure all content is added before ending)
-        pdfDoc.fontSize(20).text('Hello, World!', 100, 300);
-
-        // Finalize the PDF and end the response
-        pdfDoc.end();
-
-    } catch (error) {
-        // Handle errors gracefully
-        console.error('Error generating PDF:', error);
-        res.status(500).send('Internal Server Error');
-    }
-
+    let pdfDoc = new PDFDocument
+    pdfDoc.pipe(fs.createWriteStream('./reports/Bill.pdf'))
+    generatePDF(pdfDoc, name)
+    pdfDoc.end()
+    res.status(200).json('pdf updated successfully')
 })
-
 
 app.listen(port)
 
