@@ -5,9 +5,6 @@ const conn = require('./connection.js')
 const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer, checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
 const app = express()
 const port = 3000
-const PDFDocument = require('pdfkit-table')
-const fs = require('fs');
-const path = require('path');
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
 
 app.use(express.json())
@@ -46,56 +43,6 @@ function closeConnection(conn) {
         });
     });
 }
-
-function setHeaderFooter(pdfDoc) {
-    pdfDoc.image('./reports/basefiles/Header.jpg', 0, 0,
-        {
-            fit: [pdfDoc.page.width, 300]
-        })
-    pdfDoc.image('./reports/basefiles/Footer.jpg', 0, pdfDoc.page.height - 100,
-        {
-            fit: [pdfDoc.page.width, 300],
-        })
-}
-
-
-function generatePDF(data){
-    
-    let pdfDoc = new PDFDocument
-    pdfDoc.pipe(fs.createWriteStream('./reports/Bill.pdf'));
-    const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf')
-    pdfDoc.registerFont('GujaratiFont', fontPath);
-    pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
-    pdfDoc.end();
-
-}
-
-//functions to generate pdf
-// function generatePDF(data, callback) {
-//     const pdfDoc = new PDFDocument();
-//     const filePath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
-
-//     const stream = fs.createWriteStream(filePath);
-//     pdfDoc.pipe(stream);
-
-//     const fontPath = path.join(__dirname, 'reports', 'basefiles', 'NotoSansGujarati-VariableFont_wdth,wght.ttf');
-//     pdfDoc.registerFont('GujaratiFont', fontPath);
-
-//     // Set header/footer, if needed
-//     setHeaderFooter(pdfDoc);
-
-//     pdfDoc.font('GujaratiFont').fontSize(20).text(data, 100, 500);
-//     pdfDoc.end();
-
-//     // Wait for the PDF file to be fully written
-//     stream.on('finish', () => {
-//         callback(null, filePath); // Pass null for no error
-//     });
-
-//     stream.on('error', (err) => {
-//         callback(err); // Pass error if stream fails
-//     });
-// }
 
 // formate date into dd-mm-yyyy
 function formatDate(dateString) {
@@ -757,7 +704,7 @@ app.get("/fetch_todays_bills", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
-    const query = "SELECT c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
+    const query = "SELECT c.email,c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
 
     conn.query(query, [userId, today], (err, result) => {
         if (err) {
@@ -768,6 +715,7 @@ app.get("/fetch_todays_bills", authenticate, async (req, res) => {
                 res.status(200).json({ message: `No purchase make on ${today}` })
                 return
             } else {
+                result.map(result=>result.email = result.email.split('@')[0])
                 res.status(200).json({ data: result })
                 return
             }
@@ -780,7 +728,7 @@ app.get("/fetch_todays_bills", authenticate, async (req, res) => {
 app.get('/get_all_bills', authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const query = "SELECT c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
+    const query = "SELECT c.email,c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
     conn.query(query, [userId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred..." })
@@ -796,6 +744,7 @@ app.get('/get_all_bills', authenticate, async (req, res) => {
                 let totalUnpaid = 0
 
                 result.map(result => {
+                    result.email = result.email.split('@')[0]
                     totalAmount += result.amount
                     if (result.payment_status == 'paid')
                         totalPaid += result.amount
@@ -881,21 +830,6 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
     //     }
     // });
     closeConnection(conn)
-})
-
-app.get('/tmp', (req, res) => {
-    const name = req.body.name
-    const pdfPath = path.join(__dirname, 'reports', 'Bill.pdf')
-
-    fs.readFile(pdfPath, (err, data) => {
-        if (err) {
-            res.status(500).json({ message: "Error reading the PDF file" })
-            return
-        }
-        generatePDF(name)
-        res.contentType("application/pdf");
-        res.send(data)
-    });
 })
 
 app.listen(port)
