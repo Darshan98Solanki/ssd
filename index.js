@@ -882,8 +882,7 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
 
 app.get('/tmp', (req, res) => {
     const name = "વંશ";
-    const pdfPath = path.join(__dirname, 'reports', 'SampleDocument.pdf');
-
+    
     let pdfDoc = new PDFDocument
     pdfDoc.pipe(fs.createWriteStream('./reports/Bill.pdf'))
     generatePDF(pdfDoc, name)
