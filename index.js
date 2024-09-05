@@ -819,16 +819,6 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
             }
         })
     }
-    // var path = require('path');
-    // var file = path.join(__dirname, 'file.pdf');
-    // res.download(file, function (err) {
-    //     if (err) {
-    //         console.log("Error");
-    //         console.log(err);
-    //     } else {
-    //         console.log("Success");
-    //     }
-    // });
     closeConnection(conn)
 })
 
