@@ -704,7 +704,7 @@ app.get("/fetch_todays_bills", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
     const today = new Date().toISOString().split('T')[0]
-    const query = "SELECT c.email,c.organization,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
+    const query = "SELECT c.email,p.when_,p.milk_type,p.litre,p.fat,p.amount,p.when_,DATE_FORMAT(purchase_time, '%H:%i:%s') AS purchase_time FROM customers c INNER JOIN purchase p WHERE c.customer_id = p.customer_id AND c.user_id = ? AND p.purchase_date = ?"
 
     conn.query(query, [userId, today], (err, result) => {
         if (err) {
@@ -728,7 +728,7 @@ app.get("/fetch_todays_bills", authenticate, async (req, res) => {
 app.get('/get_all_bills', authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const query = "SELECT c.email,c.organization,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
+    const query = "SELECT c.email,p.fat,p.purchase_date,p.advance_amount,p.due_date,p.amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.user_id=?"
     conn.query(query, [userId], (err, result) => {
         if (err) {
             res.status(411).json({ message: "Some error occurred..." })
