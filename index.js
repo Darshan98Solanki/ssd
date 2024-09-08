@@ -432,7 +432,7 @@ app.put('/update_purchase', authenticate, async (req, res) => {
 app.get('/get_bills', authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const query = "SELECT p.purchase_id,c.customer_id,c.name,p.amount,p.due_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
+    const query = "SELECT p.purchase_id,c.customer_id,c.name,p.amount,p.due_date,p.purchase_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
 
     conn.query(query, [userId], (err, result) => {
 
@@ -533,7 +533,7 @@ app.put("/paymentdone", authenticate, (req, res) => {
 app.get("/getusers_for_calendar", authenticate, async (req, res) => {
 
     const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
-    const query = "SELECT c.name,p.due_date,p.purchase_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
+    const query = "SELECT c.name,p.due_date,p.payment_status FROM customers c INNER JOIN purchase p ON p.customer_id = c.customer_id AND c.user_id = ?"
 
     conn.query(query, [userId], (err, result) => {
 
