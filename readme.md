@@ -152,8 +152,6 @@
                     "data": [
                         {
                             "purchase_id": int,
-                            "name": "text",
-                            "organization": "text",
                             "fat_price": float,
                             "when_": "text",
                             "milk_type": "text",
@@ -256,6 +254,7 @@
                         {
                             "name": "text",
                             "due_date": "yyyy-mm-ddT00:00:00.000Z",
+                            "purchase_date": "yyyy-mm-ddT00:00:00",
                             "payment_status": "text"
                         },
                         .
