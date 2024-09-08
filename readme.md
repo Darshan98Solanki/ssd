@@ -208,6 +208,7 @@
                         "name": "text",
                         "amount": int,
                         "due_date": "yyyy-mm-ddT00:00:00.000Z",
+                        "purchase_date": "yyyy-mm-ddT00:00:00.000Z",
                         "payment_status": "text"
                     },
                     .
@@ -254,7 +255,6 @@
                         {
                             "name": "text",
                             "due_date": "yyyy-mm-ddT00:00:00.000Z",
-                            "purchase_date": "yyyy-mm-ddT00:00:00",
                             "payment_status": "text"
                         },
                         .
