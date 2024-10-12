@@ -43,6 +43,7 @@ const checkSingleFetchOrder = zod.object({
     organization: zod.string({message:"Organization is required"}).min(1,{message:"Organization name is too short"}),
     when: zod.string({message:"When option is required"}).min(1,{message:"Enter Valid option morning or evening"}),
     purchase_date: zod.string({message:"purchase date is required"}).date({message:"Enter valid date"}),
+    which: zod.string({message:"Which option is required"}).min(1,{message:"Enter valid option cow or bufallow"})
 })
 
 const checkPurchaseId = zod.object({
