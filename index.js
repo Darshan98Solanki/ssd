@@ -2,7 +2,7 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const conn = require('./connection.js')
-const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer, checkSingleFetchOrder, checkAdvancedPayment } = require('./types')
+const { login, signUp, makeOrder, checkPurchaseId, purchaseUpdate, updateProfile, checkOrganization, addCustomer, checkSingleFetchOrder, checkOrganizationAndDates } = require('./types')
 const app = express()
 const port = 3000
 const secretKey = 'shyam-dudh-dairy&anomalyenterprise'
@@ -822,6 +822,66 @@ app.get("/get_all_bills_on_organizations", authenticate, async (req, res) => {
     }
     closeConnection(conn)
 })
+
+
+app.get("/get_bills_between_dates_on_organizations", authenticate, async (req, res) => {
+
+    const data = req.body
+    const parseData = checkOrganizationAndDates.safeParse(data)
+
+    if (!parseData.success) {
+        res.status(200).json({ message: parseData.error.issues[0].message })
+        return
+    } else {
+
+        const organization = parseData.data.organization
+        const startDate = parseData.data.startDate
+        const endDate = parseData.data.endDate
+        const userId = await getUserIdFromToken(req).then(response => { return response.data }).catch(err => { res.status(err.code).json({ message: err.message }) })
+        const getUserData = "SELECt name, mobile_no, email,organization FROM customers WHERE organization = ? AND user_id = ?"
+
+        conn.query(getUserData, [organization, userId], (err, customerData) => {
+            if (err) {
+                res.status(411).json({ message: "Some error occurred..." })
+                return
+            } else {
+                const query = "SELECT p.fat,p.purchase_date,p.due_date,p.amount,p.advance_amount,p.litre,p.milk_type,p.when_, DATE_FORMAT(p.purchase_time, '%H:%i:%s') AS purchase_time,p.payment_status FROM customers c INNER JOIN purchase p ON c.customer_id = p.customer_id AND c.organization = ? AND c.user_id = ? AND p.purchase_date BETWEEN ? AND ?;"
+                conn.query(query, [organization, userId, startDate, endDate], (err, result) => {
+                    if (err) {
+                        res.status(411).json({ message: "Some error occurred..." })
+                        return
+                    } else {
+                        if (result.length == 0) {
+                            res.status(200).json({ message: `No pending bills for ${organization} or No such organization found` })
+                            return
+                        } else {
+                            let totalAmountUnpaid = 0
+                            let totalAmountPaid = 0
+                            let totalAdvanceAmount = 0
+                            result.map(result => {
+                                if (result.payment_status == 'paid')
+                                    totalAmountPaid += result.amount
+                                else
+                                    totalAmountUnpaid += result.amount
+
+                                totalAdvanceAmount += result.advance_amount
+                                result.purchase_date = formatDate(result.purchase_date)
+                                checkPurchaseStatus(result)
+                                result.due_date = formatDate(result.due_date)
+                            })
+                            customerData = { "userdata": customerData[0], "purchases": result, "total amount paid": totalAmountPaid, "total amount unpaid": totalAmountUnpaid, "total advance": totalAdvanceAmount }
+
+                            res.status(200).json(customerData)
+                            return
+                        }
+                    }
+                })
+            }
+        })
+    }
+    closeConnection(conn)
+})
+
 
 app.listen(port)
 

@@ -521,3 +521,49 @@
     ```
     **Note:-** get all bills based on organization {paid, unpaid and pending payments} 
     <br/>
+
+23. route:-"/get_bills_between_dates_on_organizations"
+    **Method:- GET**
+
+    **Required Data:** `token required, {organization, starDate, endDate}`
+    
+    **Example**
+    ```json
+        {
+            "organization":"text"
+        }
+    ```
+    ```
+        Returns:-{
+                    "userdata": {
+                        "name": "text",
+                        "mobile_no": "text",
+                        "email": "text",
+                        "organization": "text"
+                    },
+                    "purchases": [
+                        {
+                            "fat": int,
+                            "purchase_date": "dd-mm-yyyy",
+                            "due_date": "dd-mm-yyyy",
+                            "amount": int,
+                            "advance_amount":int
+                            "litre": int,
+                            "milk_type": "text",
+                            "when_": "text",
+                            "purchase_time": "hh:mm:ss"
+                            "payment_status":"status"
+                        },
+                        .
+                        .
+                        .
+                    ],
+                    "total amount paid": int,
+                    "total amount unpaid": int,
+                    "total advance": int
+                }
+            or
+            {message} if no purchase done for today
+    ```
+    **Note:-** get all bills based on organization and selective dates {paid, unpaid and pending payments} 
+    <br/>

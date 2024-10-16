@@ -71,6 +71,12 @@ const checkAdvancedPayment = zod.object({
     amount: zod.number({message:"Amount is required"}).min(1,{message:"Amount should be greater than zero"}),
 })
 
+const checkOrganizationAndDates = zod.object({
+    organization: zod.string({message:"Organization is required"}).min(1,{message:"Organization name is too short"}),
+    startDate: zod.string({message:"Start date is required"}).date({message:"Enter valid date"}),
+    endDate: zod.string({message:"End date is required"}).date({message:"Enter valid date"}),
+})
+
 module.exports = {
     signUp,
     login,
@@ -81,5 +87,6 @@ module.exports = {
     checkOrganization,
     addCustomer,
     checkSingleFetchOrder,
-    checkAdvancedPayment
+    checkAdvancedPayment,
+    checkOrganizationAndDates
 }
